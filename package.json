@@ -1,14 +1,19 @@
 {
   "name": "connect-x",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "turbo": "latest"
+    "@commitlint/cli": "^20.2.0",
+    "@commitlint/config-conventional": "^20.2.0",
+    "husky": "^9.1.7",
+    "turbo": "latest",
+    "typescript": "^5.0.0"
   }
 }
