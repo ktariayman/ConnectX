@@ -1,0 +1,14 @@
+{
+  "name": "connect-x",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "turbo": "latest"
+  }
+}
