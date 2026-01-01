@@ -1,0 +1,76 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_SERVER: ${{ github.repository }}/server
+  IMAGE_NAME_CLIENT: ${{ github.repository }}/client
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9 
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Build shared package
+        run: pnpm --filter @connect-x/shared build
+        
+      - name: Lint and Test
+        run: |
+          pnpm lint
+          pnpm test
+
+  build-and-push:
+    needs: lint-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          target: production
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SERVER }}:latest
+
+      - name: Build and push Client image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/client/Dockerfile
+          target: production
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_CLIENT }}:latest
