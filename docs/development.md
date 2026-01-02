@@ -34,3 +34,5 @@ docker-compose -f docker-compose.prod.yml up --build
 ## Why Not Docker for Development?
 
 pnpm monorepos with symlinks don't play well with Docker volumes on Windows. The selective mounting required becomes complex and fragile. Local development is faster and more reliable.
+
+this is only for windows users, for mac and linux users, you can use docker for development
