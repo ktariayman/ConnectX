@@ -2,24 +2,26 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import router from './presentation/http/router';
+import { setupSocketHandlers } from './presentation/websocket';
 
 const app = express();
-app.use(cors());
-
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
  cors: {
   origin: '*',
- }
+  methods: ['GET', 'POST'],
+ },
 });
 
-app.get('/', (req, res) => {
- res.json({ status: 'ok', message: 'ConnectX Server is running' });
-});
+app.use(cors());
+app.use(express.json());
 
+app.use('/api', router);
 
-const PORT = process.env.PORT || 4000;
+setupSocketHandlers(io);
 
+const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
- console.log(`Server running on port ${PORT}`);
+ console.log(`Server running on http://localhost:${PORT}`);
 });
