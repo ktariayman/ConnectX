@@ -20,9 +20,34 @@ export type GameEventPayloads = {
 };
 
 export class GameEventEmitter extends EventEmitter {
+ private static instance: GameEventEmitter;
+
+ private constructor() {
+  super();
+ }
+
+ public static getInstance(): GameEventEmitter {
+  if (!GameEventEmitter.instance) {
+   GameEventEmitter.instance = new GameEventEmitter();
+  }
+  return GameEventEmitter.instance;
+ }
+
  emitEvent<T extends GameEvent>(event: T, payload: GameEventPayloads[T]): boolean {
   return this.emit(event, payload);
  }
+
+ onEvent<T extends GameEvent>(event: T, listener: (payload: GameEventPayloads[T]) => void): this {
+  return this.on(event, listener);
+ }
+
+ onceEvent<T extends GameEvent>(event: T, listener: (payload: GameEventPayloads[T]) => void): this {
+  return this.once(event, listener);
+ }
+
+ offEvent<T extends GameEvent>(event: T, listener: (payload: GameEventPayloads[T]) => void): this {
+  return this.off(event, listener);
+ }
 }
 
-export const gameEvents = new GameEventEmitter();
+export const gameEvents = GameEventEmitter.getInstance();

@@ -28,6 +28,29 @@ export class RoomController {
   }
  }
 
+ async join(req: Request, res: Response) {
+  try {
+   const { roomId } = z.object({ roomId: z.string().uuid() }).parse(req.params);
+   const { displayName, playerId } = z.object({
+    displayName: z.string().min(2),
+    playerId: z.string().uuid().optional()
+   }).parse(req.body);
+
+   const result = await roomService.joinRoom(roomId, displayName, '', playerId);
+
+   if (result.error) {
+    return res.status(400).json({ error: result.error });
+   }
+
+   return res.json({
+    roomId,
+    playerId: result.playerId
+   });
+  } catch (error: any) {
+   return res.status(400).json({ error: error.message || 'Invalid data' });
+  }
+ }
+
  /**
   * GET /api/rooms
   */

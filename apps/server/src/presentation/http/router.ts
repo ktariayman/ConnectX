@@ -5,6 +5,7 @@ import { debugController } from './DebugController';
 const router = Router();
 
 router.post('/rooms', (req, res) => roomController.create(req, res));
+router.post('/rooms/:roomId/join', (req, res) => roomController.join(req, res));
 router.get('/rooms', (req, res) => roomController.list(req, res));
 router.get('/rooms/:roomId', (req, res) => roomController.get(req, res));
 
