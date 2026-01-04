@@ -5,7 +5,8 @@ import {
  isValidMove,
  getDropRow,
  checkWin,
- createEmptyBoard
+ createEmptyBoard,
+ Player
 } from '@connect-x/shared';
 import { IRoomRepository } from '../../domain/ports/IRoomRepository';
 import { IGameService } from '../../domain/ports/IServices';
@@ -28,7 +29,7 @@ export class GameService implements IGameService {
 
   player.isReady = true;
 
-  if (room.players.size === 2 && Array.from(room.players.values()).every(p => p.isReady)) {
+  if (room.players.size === 2 && Array.from(room.players.values()).every((p: Player) => p.isReady)) {
    room.gameState.status = 'IN_PROGRESS';
    room.turnStartedAt = new Date();
    gameEvents.emitEvent(GameEvent.GAME_STARTED, { roomId, gameState: room.gameState });
@@ -79,6 +80,7 @@ export class GameService implements IGameService {
    gameState: room.gameState,
    turnStartedAt: room.turnStartedAt
   });
+  gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
  }
 
  async handleForfeit(roomId: string, playerId: string, reason: string): Promise<void> {

@@ -8,7 +8,7 @@ export const BoardConfigSchema = z.object({
 });
 
 export const RoomCreateSchema = z.object({
- displayName: z.string().min(2).max(20).trim(),
+ username: z.string().min(2).max(20).trim(),
  config: BoardConfigSchema.optional(),
  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).default('MEDIUM'),
  isPublic: z.boolean().default(true),
@@ -16,8 +16,21 @@ export const RoomCreateSchema = z.object({
 
 export const RoomJoinSchema = z.object({
  roomId: z.string().uuid(),
- displayName: z.string().min(2).max(20).trim(),
+ username: z.string().min(2).max(20).trim(),
+});
+
+
+export const RoomSyncSchema = z.object({
  playerId: z.string().uuid().optional(),
+ room: z.any(),
+ context: z.object({
+  isMyTurn: z.boolean(),
+  myColor: z.enum(['RED', 'BLUE']).optional(),
+  activeColor: z.enum(['RED', 'BLUE']).optional(),
+  opponentName: z.string().optional(),
+  status: z.string(),
+  timeLeft: z.number().int().optional(),
+ }).optional(),
 });
 
 export const MakeMoveSchema = z.object({

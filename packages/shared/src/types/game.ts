@@ -1,5 +1,10 @@
 import { DIFFICULTY_LEVELS } from '../constants/game';
 
+export interface User {
+ username: string;
+ createdAt: Date;
+}
+
 export type CellState = 'EMPTY' | 'PLAYER_1' | 'PLAYER_2';
 export type GameStatus = 'WAITING' | 'IN_PROGRESS' | 'FINISHED';
 export type PlayerColor = 'RED' | 'BLUE';
@@ -12,8 +17,7 @@ export interface BoardConfig {
 }
 
 export interface Player {
- id: string;
- displayName: string;
+ id: string; // This is the username
  color: PlayerColor;
  isReady: boolean;
 }

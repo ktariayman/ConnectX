@@ -1,13 +1,15 @@
 import { Server, Socket } from 'socket.io';
 import { RoomJoinSchema } from '@connect-x/shared';
-import { roomService, gameService } from '../../../registry';
+import { roomService, gameService, userService } from '../../../registry';
 import { gameEvents, GameEvent } from '../../../domain/events/GameEventEmitter';
+import { calculateGameContext } from '../../../application/utils/context';
 
 export function setupRoomHandlers(io: Server, socket: Socket) {
  socket.on('room:join', async (data) => {
   try {
-   const { roomId, displayName, playerId } = RoomJoinSchema.parse(data);
-   const result = await roomService.joinRoom(roomId, displayName, socket.id, playerId);
+   const { roomId, username } = RoomJoinSchema.parse(data);
+   await userService.register(username);
+   const result = await roomService.joinRoom(roomId, username, socket.id);
 
    if (result.error) {
     socket.emit('error', { code: 'JOIN_ERROR', message: result.error });
@@ -20,10 +22,12 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
 
    // Send initial state to the joined player
    socket.emit('room:updated', {
+    playerId: result.playerId,
     room: {
      ...result.room,
      players: Array.from(result.room.players.values())
-    }
+    },
+    context: calculateGameContext(result.room, result.playerId)
    });
 
   } catch (error: any) {
@@ -58,13 +62,23 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
 }
 
 export function setupRoomDomainListeners(io: Server) {
+
  gameEvents.onEvent(GameEvent.ROOM_UPDATED, ({ roomId, room }) => {
-  io.to(roomId).emit('room:updated', {
-   room: {
-    ...room,
-    players: Array.from(room.players.values())
+  const sockets = io.sockets.adapter.rooms.get(roomId);
+  if (sockets) {
+   for (const socketId of sockets) {
+    const socket = io.sockets.sockets.get(socketId);
+    if (socket && socket.data.playerId) {
+     socket.emit('room:updated', {
+      room: {
+       ...room,
+       players: Array.from(room.players.values())
+      },
+      context: calculateGameContext(room, socket.data.playerId)
+     });
+    }
    }
-  });
+  }
  });
 
  gameEvents.onEvent(GameEvent.PLAYER_JOINED, ({ roomId, displayName }) => {

@@ -3,22 +3,28 @@ import { Room, Player, BoardConfig, DifficultyLevel, createEmptyBoard } from '@c
 import { IRoomRepository } from '../../domain/ports/IRoomRepository';
 import { IRoomService } from '../../domain/ports/IServices';
 import { gameEvents, GameEvent } from '../../domain/events/GameEventEmitter';
+import { UserService } from './UserService';
 
 export class RoomService implements IRoomService {
- constructor(private roomRepository: IRoomRepository) { }
+ constructor(
+  private roomRepository: IRoomRepository,
+  private userService: UserService
+ ) { }
 
  async createRoom(
-  creatorName: string,
+  username: string,
   config: BoardConfig,
   difficulty: DifficultyLevel,
   isPublic: boolean
  ): Promise<{ room: Room; playerId: string }> {
+  const user = await this.userService.getUser(username);
+  if (!user) throw new Error('User not found');
+
   const roomId = uuidv4();
-  const playerId = uuidv4();
+  const playerId = user.username;
 
   const player: Player = {
    id: playerId,
-   displayName: creatorName,
    color: 'RED',
    isReady: false,
   };
@@ -47,28 +53,27 @@ export class RoomService implements IRoomService {
 
  async joinRoom(
   roomId: string,
-  displayName: string,
+  username: string,
   socketId: string,
-  playerId?: string
+  _ignored?: string
  ): Promise<{ room: Room; playerId: string; error?: string }> {
+  const user = await this.userService.getUser(username);
+  if (!user) return { room: {} as any, playerId: '', error: 'User not found' };
+
   const room = await this.roomRepository.findById(roomId);
   if (!room) throw new Error('Room not found');
 
-  if (playerId) {
-   const existingPlayer = room.players.get(playerId);
-   if (existingPlayer) {
-    await this.roomRepository.trackPlayer(socketId, roomId);
-    return { room, playerId: existingPlayer.id };
-   }
+  if (room.players.has(user.username)) {
+   await this.roomRepository.trackPlayer(socketId, roomId);
+   return { room, playerId: user.username };
   }
 
   if (room.players.size >= 2) return { room, playerId: '', error: 'Room is full' };
   if (room.gameState.status !== 'WAITING') return { room, playerId: '', error: 'Game already in progress' };
 
-  const newPlayerId = uuidv4();
+  const newPlayerId = user.username;
   const player: Player = {
    id: newPlayerId,
-   displayName,
    color: 'BLUE',
    isReady: false,
   };
@@ -77,7 +82,7 @@ export class RoomService implements IRoomService {
   await this.roomRepository.save(room);
   await this.roomRepository.trackPlayer(socketId, roomId);
 
-  gameEvents.emitEvent(GameEvent.PLAYER_JOINED, { roomId, playerId: newPlayerId, displayName });
+  gameEvents.emitEvent(GameEvent.PLAYER_JOINED, { roomId, playerId: newPlayerId, displayName: user.username });
   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
 
   return { room, playerId: newPlayerId };

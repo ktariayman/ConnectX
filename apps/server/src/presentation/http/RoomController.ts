@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { roomService } from '../../registry';
-import { RoomCreateSchema, DEFAULT_BOARD_CONFIG } from '@connect-x/shared';
+import { roomService, userService } from '../../registry';
+import { RoomCreateSchema, RoomJoinSchema, DEFAULT_BOARD_CONFIG } from '@connect-x/shared';
 import { z } from 'zod';
 
 export class RoomController {
@@ -11,9 +11,10 @@ export class RoomController {
   try {
    const input = RoomCreateSchema.parse(req.body);
    const config = input.config || DEFAULT_BOARD_CONFIG;
+   await userService.register(input.username);
 
    const result = await roomService.createRoom(
-    input.displayName,
+    input.username,
     config,
     input.difficulty,
     input.isPublic
@@ -30,13 +31,11 @@ export class RoomController {
 
  async join(req: Request, res: Response) {
   try {
-   const { roomId } = z.object({ roomId: z.string().uuid() }).parse(req.params);
-   const { displayName, playerId } = z.object({
-    displayName: z.string().min(2),
-    playerId: z.string().uuid().optional()
-   }).parse(req.body);
+   const { roomId, username } = RoomJoinSchema.parse({ ...req.params, ...req.body });
 
-   const result = await roomService.joinRoom(roomId, displayName, '', playerId);
+   await userService.register(username);
+
+   const result = await roomService.joinRoom(roomId, username, '');
 
    if (result.error) {
     return res.status(400).json({ error: result.error });
