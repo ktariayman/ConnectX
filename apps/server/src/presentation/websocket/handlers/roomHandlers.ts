@@ -19,6 +19,7 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    socket.join(roomId);
    socket.data.roomId = roomId;
    socket.data.username = result.username;
+   socket.data.isSpectator = false;
 
    // Send initial state to the joined player
    socket.emit('room:updated', {
@@ -26,6 +27,37 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     room: {
      ...result.room,
      players: Array.from(result.room.players.values())
+    },
+    context: calculateGameContext(result.room, result.username)
+   });
+
+  } catch (error: any) {
+   socket.emit('error', { code: 'INVALID_DATA', message: error.message });
+  }
+ });
+ socket.on('room:spectate', async (data) => {
+  try {
+   const { roomId, username } = RoomJoinSchema.parse(data);
+   await userService.register(username);
+   const result = await roomService.joinAsSpectator(roomId, username, socket.id);
+
+   if (result.error) {
+    socket.emit('error', { code: 'SPECTATE_ERROR', message: result.error });
+    return;
+   }
+
+   socket.join(roomId);
+   socket.data.roomId = roomId;
+   socket.data.username = result.username;
+   socket.data.isSpectator = true;
+
+   // Send initial state to the spectator
+   socket.emit('room:updated', {
+    playerId: result.username,
+    room: {
+     ...result.room,
+     players: Array.from(result.room.players.values()),
+     spectators: Array.from(result.room.spectators)
     },
     context: calculateGameContext(result.room, result.username)
    });
@@ -43,23 +75,40 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
  });
 
  socket.on('room:leave', async () => {
-  const { roomId, username } = socket.data;
+  const { roomId, username, isSpectator } = socket.data;
   if (roomId && username) {
-   const { room } = await roomService.leaveRoom(socket.id, username);
-   if (room?.gameState.status === 'IN_PROGRESS') {
-    await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
+   if (isSpectator) {
+    await roomService.leaveAsSpectator(socket.id, username);
+   } else {
+    const { room } = await roomService.leaveRoom(socket.id, username);
+    if (room?.gameState.status === 'IN_PROGRESS') {
+     await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
+    }
    }
    socket.leave(roomId);
   }
  });
 
- socket.on('disconnect', async () => {
+ socket.on('spectator:leave', async () => {
   const { roomId, username } = socket.data;
   if (roomId && username) {
-   await gameService.handleForfeit(roomId, username, 'OPPONENT_DISCONNECTED');
+   await roomService.leaveAsSpectator(socket.id, username);
+   socket.leave(roomId);
+  }
+ });
+
+ socket.on('disconnect', async () => {
+  const { roomId, username, isSpectator } = socket.data;
+  if (roomId && username) {
+   if (isSpectator) {
+    await roomService.leaveAsSpectator(socket.id, username);
+   } else {
+    await gameService.handleForfeit(roomId, username, 'OPPONENT_DISCONNECTED');
+   }
   }
  });
 }
+
 
 export function setupRoomDomainListeners(io: Server) {
 
@@ -72,7 +121,8 @@ export function setupRoomDomainListeners(io: Server) {
      socket.emit('room:updated', {
       room: {
        ...room,
-       players: Array.from(room.players.values())
+       players: Array.from(room.players.values()),
+       spectators: Array.from(room.spectators)
       },
       context: calculateGameContext(room, socket.data.username)
      });
@@ -87,5 +137,13 @@ export function setupRoomDomainListeners(io: Server) {
 
  gameEvents.onEvent(GameEvent.PLAYER_LEFT, ({ roomId, playerId }) => {
   io.to(roomId).emit('player:left', { playerId });
+ });
+
+ gameEvents.onEvent(GameEvent.SPECTATOR_JOINED, ({ roomId, username }) => {
+  io.to(roomId).emit('spectator:joined', { username });
+ });
+
+ gameEvents.onEvent(GameEvent.SPECTATOR_LEFT, ({ roomId, username }) => {
+  io.to(roomId).emit('spectator:left', { username });
  });
 }

@@ -16,6 +16,14 @@ export interface IRoomService {
 
  leaveRoom(socketId: string, username: string): Promise<{ roomId: string; room?: Room }>;
 
+ joinAsSpectator(
+  roomId: string,
+  username: string,
+  socketId: string
+ ): Promise<{ room: Room; username: string; error?: string }>;
+
+ leaveAsSpectator(socketId: string, username: string): Promise<{ roomId: string; room?: Room }>;
+
  getPublicRooms(): Promise<Room[]>;
  getRoom(roomId: string): Promise<Room | undefined>;
 }

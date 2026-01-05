@@ -19,6 +19,12 @@ export const RoomJoinSchema = z.object({
  username: z.string().min(2).max(20).trim(),
 });
 
+export const RoomSpectateSchema = z.object({
+ roomId: z.string().uuid(),
+ username: z.string().min(2).max(20).trim(),
+});
+
+
 
 export const RoomSyncSchema = z.object({
  playerId: z.string().uuid().optional(),

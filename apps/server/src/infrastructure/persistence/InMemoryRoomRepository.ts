@@ -15,7 +15,7 @@ export class InMemoryRoomRepository implements IRoomRepository {
 
  async findAllPublic(): Promise<Room[]> {
   return Array.from(this.rooms.values()).filter(
-   room => room.isPublic && room.players.size < 2 && room.gameState.status === 'WAITING'
+   room => room.isPublic
   );
  }
 

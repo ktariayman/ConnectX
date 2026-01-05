@@ -7,7 +7,9 @@ export enum GameEvent {
  GAME_MOVE = 'game:move',
  GAME_OVER = 'game:over',
  PLAYER_JOINED = 'player:joined',
- PLAYER_LEFT = 'player:left'
+ PLAYER_LEFT = 'player:left',
+ SPECTATOR_JOINED = 'spectator:joined',
+ SPECTATOR_LEFT = 'spectator:left'
 }
 
 export type GameEventPayloads = {
@@ -17,6 +19,8 @@ export type GameEventPayloads = {
  [GameEvent.GAME_OVER]: { roomId: string; gameState: GameState; reason: string };
  [GameEvent.PLAYER_JOINED]: { roomId: string; playerId: string; displayName: string };
  [GameEvent.PLAYER_LEFT]: { roomId: string; playerId: string };
+ [GameEvent.SPECTATOR_JOINED]: { roomId: string; username: string };
+ [GameEvent.SPECTATOR_LEFT]: { roomId: string; username: string };
 };
 
 export class GameEventEmitter extends EventEmitter {

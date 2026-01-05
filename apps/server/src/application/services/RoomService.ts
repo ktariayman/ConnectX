@@ -32,10 +32,12 @@ export class RoomService implements IRoomService {
 
   const room: Room = {
    id: roomId,
+   creatorId: playerId,
    config,
    difficulty,
    isPublic,
    players: new Map([[playerId, player]]),
+   spectators: new Set(),
    gameState: {
     board: createEmptyBoard(config),
     currentPlayer: 'PLAYER_1',
@@ -98,6 +100,12 @@ export class RoomService implements IRoomService {
    await this.roomRepository.untrackPlayer(socketId);
    return { roomId };
   }
+  if (room.creatorId === playerId) {
+   await this.roomRepository.delete(roomId);
+   await this.roomRepository.untrackPlayer(socketId);
+   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room: { ...room, gameState: { ...room.gameState, status: 'FINISHED' as const } } });
+   return { roomId };
+  }
 
   room.players.delete(playerId);
   await this.roomRepository.untrackPlayer(socketId);
@@ -120,4 +128,59 @@ export class RoomService implements IRoomService {
  async getRoom(roomId: string): Promise<Room | undefined> {
   return this.roomRepository.findById(roomId);
  }
+
+ async joinAsSpectator(
+  roomId: string,
+  username: string,
+  socketId: string
+ ): Promise<{ room: Room; username: string; error?: string }> {
+  const user = await this.userService.getUser(username);
+  if (!user) return { room: {} as any, username: '', error: 'User not found' };
+
+  const room = await this.roomRepository.findById(roomId);
+  if (!room) return { room: {} as any, username: '', error: 'Room not found' };
+
+  if (room.players.has(user.username)) {
+   return { room: {} as any, username: '', error: 'You are already a player in this game' };
+  }
+
+  if (room.creatorId === user.username) {
+   return { room: {} as any, username: '', error: 'Room creator cannot spectate their own room' };
+  }
+
+  if (room.spectators.has(user.username)) {
+   await this.roomRepository.trackPlayer(socketId, roomId);
+   return { room, username: user.username };
+  }
+
+  room.spectators.add(user.username);
+  await this.roomRepository.save(room);
+  await this.roomRepository.trackPlayer(socketId, roomId);
+
+  gameEvents.emitEvent(GameEvent.SPECTATOR_JOINED, { roomId, username: user.username });
+  gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
+
+  return { room, username: user.username };
+ }
+
+ async leaveAsSpectator(socketId: string, username: string): Promise<{ roomId: string; room?: Room }> {
+  const roomId = await this.roomRepository.getPlayerRoomId(socketId);
+  if (!roomId) throw new Error('Not in a room');
+
+  const room = await this.roomRepository.findById(roomId);
+  if (!room) {
+   await this.roomRepository.untrackPlayer(socketId);
+   return { roomId };
+  }
+
+  room.spectators.delete(username);
+  await this.roomRepository.untrackPlayer(socketId);
+  await this.roomRepository.save(room);
+
+  gameEvents.emitEvent(GameEvent.SPECTATOR_LEFT, { roomId, username });
+  gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
+
+  return { roomId, room };
+ }
 }
+

@@ -59,6 +59,8 @@ export class RoomController {
    const formatted = rooms.map(room => ({
     id: room.id,
     playerCount: room.players.size,
+    spectatorCount: room.spectators.size,
+    status: room.gameState.status,
     difficulty: room.difficulty,
     config: room.config,
    }));

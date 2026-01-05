@@ -40,11 +40,14 @@ export interface Move {
 
 export interface Room {
  id: string;
+ creatorId: string;
  config: BoardConfig;
  difficulty: DifficultyLevel;
  isPublic: boolean;
  players: Map<string, Player>;
+ spectators: Set<string>;
  gameState: GameState;
  createdAt: Date;
  turnStartedAt: Date | null;
 }
+
