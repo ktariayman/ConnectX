@@ -2,7 +2,7 @@
 
 This backend is built using **Hexagonal Architecture** (Ports & Adapters) and **Domain-Driven Design (DDD)** principles. It is designed for maximum testability, maintainability, and scalability.
 
-## 🏗️ Folder Structure & Responsibilities
+##  Folder Structure & Responsibilities
 
 ### 1. `domain/` (Core Rules)
 The "Source of Truth" for the entire application. It contains the business rules and definitions that never change, regardless of technology.
@@ -34,6 +34,6 @@ How the outside world talks to our backend.
 ### 🔌 Dependency Inversion
 Inner layers (Domain, Application) never depend on outer layers (Infrastructure, Presentation). Instead, outer layers "plug in" to interfaces (Ports) defined in the inner layers. This allows us to swap a library or database without touching the core logic.
 
-### 🔔 Event-Driven Logic
+###  Event Logic
 The Application layer emits **Domain Events** via a central `GameEventEmitter`. The Presentation layer (Sockets) listens to these events and broadcasts them. This decouples the "Doing" from the "Telling."
 

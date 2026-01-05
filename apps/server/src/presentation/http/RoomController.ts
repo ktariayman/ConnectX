@@ -22,7 +22,7 @@ export class RoomController {
 
    return res.status(201).json({
     roomId: result.room.id,
-    playerId: result.playerId
+    playerId: result.username
    });
   } catch (error: any) {
    return res.status(400).json({ error: error.message || 'Invalid data' });
@@ -43,7 +43,7 @@ export class RoomController {
 
    return res.json({
     roomId,
-    playerId: result.playerId
+    playerId: result.username
    });
   } catch (error: any) {
    return res.status(400).json({ error: error.message || 'Invalid data' });

@@ -6,25 +6,24 @@ export interface IRoomService {
   config: BoardConfig,
   difficulty: DifficultyLevel,
   isPublic: boolean
- ): Promise<{ room: Room; playerId: string }>;
+ ): Promise<{ room: Room; username: string }>;
 
  joinRoom(
   roomId: string,
-  displayName: string,
-  socketId: string,
-  playerId?: string
- ): Promise<{ room: Room; playerId: string; error?: string }>;
+  username: string,
+  socketId: string
+ ): Promise<{ room: Room; username: string; error?: string }>;
 
- leaveRoom(socketId: string, playerId: string): Promise<{ roomId: string; room?: Room }>;
+ leaveRoom(socketId: string, username: string): Promise<{ roomId: string; room?: Room }>;
 
  getPublicRooms(): Promise<Room[]>;
  getRoom(roomId: string): Promise<Room | undefined>;
 }
 
 export interface IGameService {
- setPlayerReady(roomId: string, playerId: string): Promise<void>;
- makeMove(roomId: string, playerId: string, column: number): Promise<void>;
- requestRematch(roomId: string, playerId: string): Promise<void>;
- handleForfeit(roomId: string, playerId: string, reason: string): Promise<void>;
+ setPlayerReady(roomId: string, username: string): Promise<void>;
+ makeMove(roomId: string, username: string, column: number): Promise<void>;
+ requestRematch(roomId: string, username: string): Promise<void>;
+ handleForfeit(roomId: string, username: string, reason: string): Promise<void>;
  checkTimeouts(): Promise<void>;
 }

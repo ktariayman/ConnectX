@@ -16,11 +16,12 @@ export class RoomService implements IRoomService {
   config: BoardConfig,
   difficulty: DifficultyLevel,
   isPublic: boolean
- ): Promise<{ room: Room; playerId: string }> {
+ ): Promise<{ room: Room; username: string }> {
   const user = await this.userService.getUser(username);
   if (!user) throw new Error('User not found');
 
   const roomId = uuidv4();
+  // In our identity system, playerId IS the username
   const playerId = user.username;
 
   const player: Player = {
@@ -48,28 +49,28 @@ export class RoomService implements IRoomService {
   };
 
   await this.roomRepository.save(room);
-  return { room, playerId };
+  return { room, username: playerId };
  }
 
  async joinRoom(
   roomId: string,
   username: string,
   socketId: string,
-  _ignored?: string
- ): Promise<{ room: Room; playerId: string; error?: string }> {
+  _ignored?: string // Kept for backwards compatibility, will be removed
+ ): Promise<{ room: Room; username: string; error?: string }> {
   const user = await this.userService.getUser(username);
-  if (!user) return { room: {} as any, playerId: '', error: 'User not found' };
+  if (!user) return { room: {} as any, username: '', error: 'User not found' };
 
   const room = await this.roomRepository.findById(roomId);
   if (!room) throw new Error('Room not found');
 
   if (room.players.has(user.username)) {
    await this.roomRepository.trackPlayer(socketId, roomId);
-   return { room, playerId: user.username };
+   return { room, username: user.username };
   }
 
-  if (room.players.size >= 2) return { room, playerId: '', error: 'Room is full' };
-  if (room.gameState.status !== 'WAITING') return { room, playerId: '', error: 'Game already in progress' };
+  if (room.players.size >= 2) return { room, username: '', error: 'Room is full' };
+  if (room.gameState.status !== 'WAITING') return { room, username: '', error: 'Game already in progress' };
 
   const newPlayerId = user.username;
   const player: Player = {
@@ -85,7 +86,7 @@ export class RoomService implements IRoomService {
   gameEvents.emitEvent(GameEvent.PLAYER_JOINED, { roomId, playerId: newPlayerId, displayName: user.username });
   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
 
-  return { room, playerId: newPlayerId };
+  return { room, username: newPlayerId };
  }
 
  async leaveRoom(socketId: string, playerId: string): Promise<{ roomId: string; room?: Room }> {

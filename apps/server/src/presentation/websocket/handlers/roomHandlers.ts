@@ -18,16 +18,16 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
 
    socket.join(roomId);
    socket.data.roomId = roomId;
-   socket.data.playerId = result.playerId;
+   socket.data.username = result.username;
 
    // Send initial state to the joined player
    socket.emit('room:updated', {
-    playerId: result.playerId,
+    playerId: result.username, // Kept for frontend compatibility
     room: {
      ...result.room,
      players: Array.from(result.room.players.values())
     },
-    context: calculateGameContext(result.room, result.playerId)
+    context: calculateGameContext(result.room, result.username)
    });
 
   } catch (error: any) {
@@ -36,27 +36,27 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
  });
 
  socket.on('player:ready', async () => {
-  const { roomId, playerId } = socket.data;
-  if (roomId && playerId) {
-   await gameService.setPlayerReady(roomId, playerId);
+  const { roomId, username } = socket.data;
+  if (roomId && username) {
+   await gameService.setPlayerReady(roomId, username);
   }
  });
 
  socket.on('room:leave', async () => {
-  const { roomId, playerId } = socket.data;
-  if (roomId && playerId) {
-   const { room } = await roomService.leaveRoom(socket.id, playerId);
+  const { roomId, username } = socket.data;
+  if (roomId && username) {
+   const { room } = await roomService.leaveRoom(socket.id, username);
    if (room?.gameState.status === 'IN_PROGRESS') {
-    await gameService.handleForfeit(roomId, playerId, 'OPPONENT_LEFT');
+    await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
    }
    socket.leave(roomId);
   }
  });
 
  socket.on('disconnect', async () => {
-  const { roomId, playerId } = socket.data;
-  if (roomId && playerId) {
-   await gameService.handleForfeit(roomId, playerId, 'OPPONENT_DISCONNECTED');
+  const { roomId, username } = socket.data;
+  if (roomId && username) {
+   await gameService.handleForfeit(roomId, username, 'OPPONENT_DISCONNECTED');
   }
  });
 }
@@ -68,13 +68,13 @@ export function setupRoomDomainListeners(io: Server) {
   if (sockets) {
    for (const socketId of sockets) {
     const socket = io.sockets.sockets.get(socketId);
-    if (socket && socket.data.playerId) {
+    if (socket && socket.data.username) {
      socket.emit('room:updated', {
       room: {
        ...room,
        players: Array.from(room.players.values())
       },
-      context: calculateGameContext(room, socket.data.playerId)
+      context: calculateGameContext(room, socket.data.username)
      });
     }
    }

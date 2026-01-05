@@ -15,7 +15,7 @@ import { gameEvents, GameEvent } from '../../domain/events/GameEventEmitter';
 export class GameService implements IGameService {
  constructor(private roomRepository: IRoomRepository) { }
 
- async setPlayerReady(roomId: string, playerId: string): Promise<void> {
+ async setPlayerReady(roomId: string, username: string): Promise<void> {
   const room = await this.roomRepository.findById(roomId);
   if (!room) return;
 
@@ -24,7 +24,7 @@ export class GameService implements IGameService {
    this.resetRoomForRematch(room);
   }
 
-  const player = room.players.get(playerId);
+  const player = room.players.get(username);
   if (!player) return;
 
   player.isReady = true;
@@ -39,14 +39,14 @@ export class GameService implements IGameService {
   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
  }
 
- async makeMove(roomId: string, playerId: string, column: number): Promise<void> {
+ async makeMove(roomId: string, username: string, column: number): Promise<void> {
   const room = await this.roomRepository.findById(roomId);
   if (!room || room.gameState.status !== 'IN_PROGRESS') return;
 
   const playerIds = Array.from(room.players.keys());
   const currentPlayerIndex = room.gameState.currentPlayer === 'PLAYER_1' ? 0 : 1;
 
-  if (playerIds[currentPlayerIndex] !== playerId) {
+  if (playerIds[currentPlayerIndex] !== username) {
    throw new Error('Not your turn');
   }
 
@@ -83,12 +83,12 @@ export class GameService implements IGameService {
   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
  }
 
- async handleForfeit(roomId: string, playerId: string, reason: string): Promise<void> {
+ async handleForfeit(roomId: string, username: string, reason: string): Promise<void> {
   const room = await this.roomRepository.findById(roomId);
   if (!room || room.gameState.status !== 'IN_PROGRESS') return;
 
   const playerIds = Array.from(room.players.keys());
-  const remainingPlayerId = playerIds.find(id => id !== playerId);
+  const remainingPlayerId = playerIds.find(id => id !== username);
 
   if (remainingPlayerId) {
    const winner = playerIds.indexOf(remainingPlayerId) === 0 ? 'PLAYER_1' : 'PLAYER_2';
@@ -115,9 +115,9 @@ export class GameService implements IGameService {
   }
  }
 
- async requestRematch(roomId: string, playerId: string): Promise<void> {
+ async requestRematch(roomId: string, username: string): Promise<void> {
   // This is essentially setPlayerReady when state is FINISHED
-  return this.setPlayerReady(roomId, playerId);
+  return this.setPlayerReady(roomId, username);
  }
 
  private finishGame(room: Room, winner: 'PLAYER_1' | 'PLAYER_2' | 'DRAW', cells: [number, number][] | null, reason: string) {
