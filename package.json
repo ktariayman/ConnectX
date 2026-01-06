@@ -15,8 +15,17 @@
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
+    "@vitejs/plugin-react": "^3.1.0",
     "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "turbo": "latest",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.16",
+    "vitest-dom": "^0.1.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "pnpm test --findRelatedTests"
+    ]
   }
 }
