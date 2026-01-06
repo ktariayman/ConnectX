@@ -1,10 +1,11 @@
+import { GameResult } from '../constants/status';
 import { Move, BoardConfig, DifficultyLevel } from './game';
 
 export interface GameHistory {
  id: string;
  roomId: string;
  players: string[];
- winner: 'PLAYER_1' | 'PLAYER_2' | 'DRAW' | null;
+ winner: GameResult | null;
  config: BoardConfig;
  difficulty: DifficultyLevel;
  moveHistory: Move[];

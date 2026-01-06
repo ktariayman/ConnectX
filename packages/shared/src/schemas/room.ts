@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { BOARD_LIMITS } from '../constants/game';
+import { BOARD_LIMITS, DIFFICULTY_LEVELS_KEYS } from '../constants/game';
+import { PLAYER_COLOR } from '../constants/status';
 
 export const BoardConfigSchema = z.object({
  rows: z.number().int().min(BOARD_LIMITS.minRows).max(BOARD_LIMITS.maxRows),
@@ -10,7 +11,7 @@ export const BoardConfigSchema = z.object({
 export const RoomCreateSchema = z.object({
  username: z.string().min(2).max(20).trim(),
  config: BoardConfigSchema.optional(),
- difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).default('MEDIUM'),
+ difficulty: z.enum([DIFFICULTY_LEVELS_KEYS.EASY, DIFFICULTY_LEVELS_KEYS.MEDIUM, DIFFICULTY_LEVELS_KEYS.HARD]).default(DIFFICULTY_LEVELS_KEYS.MEDIUM),
  isPublic: z.boolean().default(true),
 });
 
@@ -31,8 +32,8 @@ export const RoomSyncSchema = z.object({
  room: z.any(),
  context: z.object({
   isMyTurn: z.boolean(),
-  myColor: z.enum(['RED', 'BLUE']).optional(),
-  activeColor: z.enum(['RED', 'BLUE']).optional(),
+  myColor: z.enum([PLAYER_COLOR.RED, PLAYER_COLOR.BLUE]).optional(),
+  activeColor: z.enum([PLAYER_COLOR.RED, PLAYER_COLOR.BLUE]).optional(),
   opponentName: z.string().optional(),
   status: z.string(),
   timeLeft: z.number().int().optional(),

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Room, Player, BoardConfig, DifficultyLevel, createEmptyBoard } from '@connect-x/shared';
+import { Room, Player, BoardConfig, DifficultyLevel, createEmptyBoard, GAME_STATUS, PLAYER_TYPE } from '@connect-x/shared';
 import { IRoomRepository } from '../../domain/ports/IRoomRepository';
 import { IRoomService } from '../../domain/ports/IServices';
 import { gameEvents, GameEvent } from '../../domain/events/GameEventEmitter';
@@ -40,8 +40,8 @@ export class RoomService implements IRoomService {
    spectators: new Set(),
    gameState: {
     board: createEmptyBoard(config),
-    currentPlayer: 'PLAYER_1',
-    status: 'WAITING',
+    currentPlayer: PLAYER_TYPE.PLAYER_1,
+    status: GAME_STATUS.WAITING,
     winner: null,
     winningCells: null,
     moveHistory: [],
@@ -67,7 +67,7 @@ export class RoomService implements IRoomService {
   if (!room) throw new Error('Room not found');
 
   if (room.players.has(user.username)) {
-   if (room.gameState.status === 'FINISHED') {
+   if (room.gameState.status === GAME_STATUS.FINISHED) {
     return { room, username: '', error: 'This game has finished. Use the replay feature to watch it.' };
    }
    await this.roomRepository.trackPlayer(socketId, roomId);
@@ -75,7 +75,7 @@ export class RoomService implements IRoomService {
   }
 
   if (room.players.size >= 2) return { room, username: '', error: 'Room is full' };
-  if (room.gameState.status !== 'WAITING') return { room, username: '', error: 'Game already in progress' };
+  if (room.gameState.status !== GAME_STATUS.WAITING) return { room, username: '', error: 'Game already in progress' };
 
   const newPlayerId = user.username;
   const player: Player = {
@@ -106,7 +106,7 @@ export class RoomService implements IRoomService {
   if (room.creatorId === playerId) {
    await this.roomRepository.delete(roomId);
    await this.roomRepository.untrackPlayer(socketId);
-   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room: { ...room, gameState: { ...room.gameState, status: 'FINISHED' as const } } });
+   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room: { ...room, gameState: { ...room.gameState, status: GAME_STATUS.FINISHED } } });
    return { roomId };
   }
 
@@ -148,7 +148,7 @@ export class RoomService implements IRoomService {
    return { room: {} as any, username: '', error: 'You are already a player in this game' };
   }
 
-  if (room.gameState.status === 'FINISHED') {
+  if (room.gameState.status === GAME_STATUS.FINISHED) {
    return { room: {} as any, username: '', error: 'This game has finished. Use the replay feature to watch it.' };
   }
 

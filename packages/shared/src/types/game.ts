@@ -1,14 +1,13 @@
-import { DIFFICULTY_LEVELS } from '../constants/game';
+import { DIFFICULTY_LEVELS, type DifficultyLevel } from '../constants/game';
+export type { DifficultyLevel };
+import type { CellState, GameResult, GameStatus, PlayerColor, PlayerType } from '../constants/status';
+
+export type { CellState, GameStatus, PlayerColor };
 
 export interface User {
  username: string;
  createdAt: Date;
 }
-
-export type CellState = 'EMPTY' | 'PLAYER_1' | 'PLAYER_2';
-export type GameStatus = 'WAITING' | 'IN_PROGRESS' | 'FINISHED';
-export type PlayerColor = 'RED' | 'BLUE';
-export type DifficultyLevel = keyof typeof DIFFICULTY_LEVELS;
 
 export interface BoardConfig {
  rows: number;
@@ -24,9 +23,9 @@ export interface Player {
 
 export interface GameState {
  board: CellState[][];
- currentPlayer: 'PLAYER_1' | 'PLAYER_2';
+ currentPlayer: PlayerType;
  status: GameStatus;
- winner: 'PLAYER_1' | 'PLAYER_2' | 'DRAW' | null;
+ winner: GameResult | null;
  winningCells: [number, number][] | null;
  moveHistory: Move[];
 }
@@ -34,7 +33,7 @@ export interface GameState {
 export interface Move {
  column: number;
  row: number;
- player: 'PLAYER_1' | 'PLAYER_2';
+ player: PlayerType;
  timestamp: Date;
 }
 

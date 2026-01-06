@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { RoomJoinSchema } from '@connect-x/shared';
+import { GAME_STATUS, RoomJoinSchema } from '@connect-x/shared';
 import { roomService, gameService, userService } from '../../../registry';
 import { gameEvents, GameEvent } from '../../../domain/events/GameEventEmitter';
 import { calculateGameContext } from '../../../application/utils/context';
@@ -81,7 +81,7 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     await roomService.leaveAsSpectator(socket.id, username);
    } else {
     const { room } = await roomService.leaveRoom(socket.id, username);
-    if (room?.gameState.status === 'IN_PROGRESS') {
+    if (room?.gameState.status === GAME_STATUS.IN_PROGRESS) {
      await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
     }
    }

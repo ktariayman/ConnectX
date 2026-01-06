@@ -1,8 +1,17 @@
-export const DIFFICULTY_LEVELS = {
- EASY: { label: 'Easy', turnTimeSeconds: 60 },
- MEDIUM: { label: 'Medium', turnTimeSeconds: 30 },
- HARD: { label: 'Hard', turnTimeSeconds: 15 },
+export const DIFFICULTY_LEVELS_KEYS = {
+ EASY: 'EASY',
+ MEDIUM: 'MEDIUM',
+ HARD: 'HARD',
 } as const;
+
+export const DIFFICULTY_LEVELS = {
+ EASY: { label: DIFFICULTY_LEVELS_KEYS.EASY, turnTimeSeconds: 60 },
+ MEDIUM: { label: DIFFICULTY_LEVELS_KEYS.MEDIUM, turnTimeSeconds: 30 },
+ HARD: { label: DIFFICULTY_LEVELS_KEYS.HARD, turnTimeSeconds: 15 },
+} as const;
+
+export type DifficultyLevel = keyof typeof DIFFICULTY_LEVELS_KEYS;
+
 
 export const DEFAULT_BOARD_CONFIG = {
  rows: 6,

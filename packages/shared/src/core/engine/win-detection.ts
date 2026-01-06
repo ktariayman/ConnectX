@@ -1,3 +1,4 @@
+import { CELL_STATE, GAME_RESULT, GameResult, PlayerType } from '../../constants/status';
 import { BoardConfig, CellState } from '../../types/game';
 
 /**
@@ -7,7 +8,7 @@ import { BoardConfig, CellState } from '../../types/game';
 export function checkWin(
  board: CellState[][],
  config: BoardConfig
-): { winner: 'PLAYER_1' | 'PLAYER_2' | 'DRAW' | null; cells: [number, number][] | null } {
+): { winner: GameResult | null; cells: [number, number][] | null } {
  const { rows, columns, connectCount } = config;
 
  for (let row = 0; row < rows; row++) {
@@ -37,9 +38,9 @@ export function checkWin(
   }
  }
 
- const isFull = board.every(row => row.every(cell => cell !== 'EMPTY'));
+ const isFull = board.every(row => row.every(cell => cell !== CELL_STATE.EMPTY));
  if (isFull) {
-  return { winner: 'DRAW', cells: null };
+  return { winner: GAME_RESULT.DRAW, cells: null };
  }
 
  return { winner: null, cells: null };
@@ -61,7 +62,7 @@ function checkLine(
  rowDir: number,
  colDir: number,
  count: number
-): { winner: 'PLAYER_1' | 'PLAYER_2'; cells: [number, number][] } | null {
+): { winner: PlayerType; cells: [number, number][] } | null {
  const first = board[startRow][startCol];
  if (first === 'EMPTY') return null;
 
@@ -73,5 +74,5 @@ function checkLine(
   cells.push([row, col]);
  }
 
- return { winner: first as 'PLAYER_1' | 'PLAYER_2', cells };
+ return { winner: first, cells };
 }

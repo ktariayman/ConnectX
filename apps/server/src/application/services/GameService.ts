@@ -7,7 +7,10 @@ import {
  checkWin,
  createEmptyBoard,
  Player,
- GameHistory
+ GameHistory,
+ GAME_STATUS,
+ PLAYER_TYPE,
+ GameResult
 } from '@connect-x/shared';
 import { IRoomRepository } from '../../domain/ports/IRoomRepository';
 import { IGameHistoryRepository } from '../../domain/ports/IGameHistoryRepository';
@@ -26,7 +29,7 @@ export class GameService implements IGameService {
   if (!room) return;
 
   // Handle rematch reset if game was finished
-  if (room.gameState.status === 'FINISHED') {
+  if (room.gameState.status === GAME_STATUS.FINISHED) {
    this.resetRoomForRematch(room);
   }
 
@@ -36,7 +39,7 @@ export class GameService implements IGameService {
   player.isReady = true;
 
   if (room.players.size === 2 && Array.from(room.players.values()).every((p: Player) => p.isReady)) {
-   room.gameState.status = 'IN_PROGRESS';
+   room.gameState.status = GAME_STATUS.IN_PROGRESS;
    room.turnStartedAt = new Date();
    gameEvents.emitEvent(GameEvent.GAME_STARTED, { roomId, gameState: room.gameState });
   }
@@ -47,10 +50,10 @@ export class GameService implements IGameService {
 
  async makeMove(roomId: string, username: string, column: number): Promise<void> {
   const room = await this.roomRepository.findById(roomId);
-  if (!room || room.gameState.status !== 'IN_PROGRESS') return;
+  if (!room || room.gameState.status !== GAME_STATUS.IN_PROGRESS) return;
 
   const playerIds = Array.from(room.players.keys());
-  const currentPlayerIndex = room.gameState.currentPlayer === 'PLAYER_1' ? 0 : 1;
+  const currentPlayerIndex = room.gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? 0 : 1;
 
   if (playerIds[currentPlayerIndex] !== username) {
    throw new Error('Not your turn');
@@ -75,7 +78,7 @@ export class GameService implements IGameService {
   if (winResult.winner) {
    this.finishGame(room, winResult.winner, winResult.cells, 'WIN');
   } else {
-   room.gameState.currentPlayer = room.gameState.currentPlayer === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
+   room.gameState.currentPlayer = room.gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? PLAYER_TYPE.PLAYER_2 : PLAYER_TYPE.PLAYER_1;
    room.turnStartedAt = new Date();
   }
 
@@ -91,13 +94,13 @@ export class GameService implements IGameService {
 
  async handleForfeit(roomId: string, username: string, reason: string): Promise<void> {
   const room = await this.roomRepository.findById(roomId);
-  if (!room || room.gameState.status !== 'IN_PROGRESS') return;
+  if (!room || room.gameState.status !== GAME_STATUS.IN_PROGRESS) return;
 
   const playerIds = Array.from(room.players.keys());
   const remainingPlayerId = playerIds.find(id => id !== username);
 
   if (remainingPlayerId) {
-   const winner = playerIds.indexOf(remainingPlayerId) === 0 ? 'PLAYER_1' : 'PLAYER_2';
+   const winner = playerIds.indexOf(remainingPlayerId) === 0 ? PLAYER_TYPE.PLAYER_1 : PLAYER_TYPE.PLAYER_2;
    this.finishGame(room, winner, null, reason);
    await this.roomRepository.save(room);
   }
@@ -110,10 +113,10 @@ export class GameService implements IGameService {
 
   for (const roomId of uniqueRoomIds) {
    const room = await this.roomRepository.findById(roomId);
-   if (room?.gameState.status === 'IN_PROGRESS' && room.turnStartedAt) {
+   if (room?.gameState.status === GAME_STATUS.IN_PROGRESS && room.turnStartedAt) {
     const limit = DIFFICULTY_LEVELS[room.difficulty].turnTimeSeconds * 1000;
     if (now - room.turnStartedAt.getTime() > limit) {
-     const winner = room.gameState.currentPlayer === 'PLAYER_1' ? 'PLAYER_2' : 'PLAYER_1';
+     const winner = room.gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? PLAYER_TYPE.PLAYER_2 : PLAYER_TYPE.PLAYER_1;
      this.finishGame(room, winner, null, 'TURN_TIMEOUT');
      await this.roomRepository.save(room);
     }
@@ -126,8 +129,8 @@ export class GameService implements IGameService {
   return this.setPlayerReady(roomId, username);
  }
 
- private async finishGame(room: Room, winner: 'PLAYER_1' | 'PLAYER_2' | 'DRAW', cells: [number, number][] | null, reason: string) {
-  room.gameState.status = 'FINISHED';
+ private async finishGame(room: Room, winner: GameResult, cells: [number, number][] | null, reason: string) {
+  room.gameState.status = GAME_STATUS.FINISHED;
   room.gameState.winner = winner;
   room.gameState.winningCells = cells;
   const gameHistory: GameHistory = {
@@ -150,8 +153,8 @@ export class GameService implements IGameService {
  private resetRoomForRematch(room: Room) {
   room.gameState = {
    board: createEmptyBoard(room.config),
-   currentPlayer: 'PLAYER_1',
-   status: 'WAITING',
+   currentPlayer: PLAYER_TYPE.PLAYER_1,
+   status: GAME_STATUS.WAITING,
    winner: null,
    winningCells: null,
    moveHistory: [],

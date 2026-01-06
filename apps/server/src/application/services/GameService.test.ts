@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameService } from './GameService';
 import { InMemoryRoomRepository } from '../../infrastructure/persistence/InMemoryRoomRepository';
-import { DEFAULT_BOARD_CONFIG } from '@connect-x/shared';
+import { DEFAULT_BOARD_CONFIG, DIFFICULTY_LEVELS_KEYS, GAME_RESULT, GAME_STATUS } from '@connect-x/shared';
 import { RoomService } from './RoomService';
 import { userService } from '../../registry';
+import { InMemoryGameHistoryRepository } from '../../infrastructure/persistence/InMemoryGameHistoryRepository';
 
 describe('GameService', () => {
  let gameService: GameService;
@@ -12,16 +13,20 @@ describe('GameService', () => {
 
  beforeEach(() => {
   repository = new InMemoryRoomRepository();
-  gameService = new GameService(repository);
+  gameService = new GameService(repository, new InMemoryGameHistoryRepository());
   roomService = new RoomService(repository, userService);
  });
 
  it('should allow players to win a game', async () => {
+  // 0. Register players
+  await userService.register('Player 1');
+  await userService.register('Player 2');
+
   // 1. Create a room
   const { room, username: p1Id } = await roomService.createRoom(
    'Player 1',
    DEFAULT_BOARD_CONFIG,
-   'MEDIUM',
+   DIFFICULTY_LEVELS_KEYS.MEDIUM,
    true
   );
   const roomId = room.id;
@@ -34,7 +39,7 @@ describe('GameService', () => {
   await gameService.setPlayerReady(roomId, p2Id);
 
   const updatedRoom = await repository.findById(roomId);
-  expect(updatedRoom?.gameState.status).toBe('IN_PROGRESS');
+  expect(updatedRoom?.gameState.status).toBe(GAME_STATUS.IN_PROGRESS);
 
   // 4. Play a quick winning sequence (Connect 4 in column 0)
   await gameService.makeMove(roomId, p1Id, 0); // R
@@ -46,12 +51,16 @@ describe('GameService', () => {
   await gameService.makeMove(roomId, p1Id, 0); // R - WINNER!
 
   const finalRoom = await repository.findById(roomId);
-  expect(finalRoom?.gameState.status).toBe('FINISHED');
-  expect(finalRoom?.gameState.winner).toBe('PLAYER_1');
+  expect(finalRoom?.gameState.status).toBe(GAME_STATUS.FINISHED);
+  expect(finalRoom?.gameState.winner).toBe(GAME_RESULT.PLAYER_1);
  });
 
  it('should enforce turn rules', async () => {
-  const { room, username: p1Id } = await roomService.createRoom('P1', DEFAULT_BOARD_CONFIG, 'MEDIUM', true);
+  // 0. Register players
+  await userService.register('P1');
+  await userService.register('P2');
+
+  const { room, username: p1Id } = await roomService.createRoom('P1', DEFAULT_BOARD_CONFIG, DIFFICULTY_LEVELS_KEYS.MEDIUM, true);
   const { username: p2Id } = await roomService.joinRoom(room.id, 'P2', 'socket-2');
   await gameService.setPlayerReady(room.id, p1Id);
   await gameService.setPlayerReady(room.id, p2Id);
