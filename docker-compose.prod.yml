@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: apps/server/Dockerfile
       target: production
+    image: ghcr.io/ktariayman/connectx/server:latest
     ports:
       - "4000:4000"
     environment:
@@ -23,8 +24,14 @@ services:
       target: production
       args:
         - VITE_API_URL=http://localhost:4000
+    image: ghcr.io/ktariayman/connectx/client:latest
     depends_on:
       - server
     ports:
-      - "9000:9000"
+      - "5173:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     restart: unless-stopped
