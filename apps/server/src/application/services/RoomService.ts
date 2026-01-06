@@ -67,6 +67,9 @@ export class RoomService implements IRoomService {
   if (!room) throw new Error('Room not found');
 
   if (room.players.has(user.username)) {
+   if (room.gameState.status === 'FINISHED') {
+    return { room, username: '', error: 'This game has finished. Use the replay feature to watch it.' };
+   }
    await this.roomRepository.trackPlayer(socketId, roomId);
    return { room, username: user.username };
   }
@@ -140,8 +143,13 @@ export class RoomService implements IRoomService {
   const room = await this.roomRepository.findById(roomId);
   if (!room) return { room: {} as any, username: '', error: 'Room not found' };
 
+  // Check if user is already a player in this room
   if (room.players.has(user.username)) {
    return { room: {} as any, username: '', error: 'You are already a player in this game' };
+  }
+
+  if (room.gameState.status === 'FINISHED') {
+   return { room: {} as any, username: '', error: 'This game has finished. Use the replay feature to watch it.' };
   }
 
   if (room.creatorId === user.username) {

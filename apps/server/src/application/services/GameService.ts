@@ -6,14 +6,20 @@ import {
  getDropRow,
  checkWin,
  createEmptyBoard,
- Player
+ Player,
+ GameHistory
 } from '@connect-x/shared';
 import { IRoomRepository } from '../../domain/ports/IRoomRepository';
+import { IGameHistoryRepository } from '../../domain/ports/IGameHistoryRepository';
 import { IGameService } from '../../domain/ports/IServices';
 import { gameEvents, GameEvent } from '../../domain/events/GameEventEmitter';
+import { v4 as uuidv4 } from 'uuid';
 
 export class GameService implements IGameService {
- constructor(private roomRepository: IRoomRepository) { }
+ constructor(
+  private roomRepository: IRoomRepository,
+  private gameHistoryRepository: IGameHistoryRepository
+ ) { }
 
  async setPlayerReady(roomId: string, username: string): Promise<void> {
   const room = await this.roomRepository.findById(roomId);
@@ -120,10 +126,24 @@ export class GameService implements IGameService {
   return this.setPlayerReady(roomId, username);
  }
 
- private finishGame(room: Room, winner: 'PLAYER_1' | 'PLAYER_2' | 'DRAW', cells: [number, number][] | null, reason: string) {
+ private async finishGame(room: Room, winner: 'PLAYER_1' | 'PLAYER_2' | 'DRAW', cells: [number, number][] | null, reason: string) {
   room.gameState.status = 'FINISHED';
   room.gameState.winner = winner;
   room.gameState.winningCells = cells;
+  const gameHistory: GameHistory = {
+   id: uuidv4(),
+   roomId: room.id,
+   players: Array.from(room.players.keys()),
+   winner,
+   config: room.config,
+   difficulty: room.difficulty,
+   moveHistory: room.gameState.moveHistory,
+   createdAt: room.createdAt,
+   finishedAt: new Date(),
+  };
+
+  await this.gameHistoryRepository.save(gameHistory);
+
   gameEvents.emitEvent(GameEvent.GAME_OVER, { roomId: room.id, gameState: room.gameState, reason });
  }
 
