@@ -8,8 +8,8 @@
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "test:cli": "pnpm --filter @connect-x/server test:cli",
-    "prepare": "husky",
-    "docker:dev": "docker-compose up --build",
+    "prepare": "husky || true",
+    "docker:dev": "docker-compose up ",
     "docker:prod": "docker-compose -f docker-compose.prod.yml up --build"
   },
   "devDependencies": {
@@ -25,7 +25,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "pnpm test --findRelatedTests"
+      "pnpm test"
     ]
   }
 }

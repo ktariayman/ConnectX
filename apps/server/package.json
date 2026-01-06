@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "nodemon --watch src --ext ts --exec \"pnpm exec tsx src/index.ts\" -L",
     "build": "tsc",
     "test": "vitest run --passWithNoTests",
     "test:cli": "tsx src/scripts/test-cli.ts"
