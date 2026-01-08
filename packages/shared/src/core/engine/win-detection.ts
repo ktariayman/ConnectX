@@ -64,7 +64,7 @@ function checkLine(
  count: number
 ): { winner: PlayerType; cells: [number, number][] } | null {
  const first = board[startRow][startCol];
- if (first === 'EMPTY') return null;
+ if (first === CELL_STATE.EMPTY) return null;
 
  const cells: [number, number][] = [];
  for (let i = 0; i < count; i++) {

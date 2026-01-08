@@ -9,7 +9,8 @@ export enum GameEvent {
  PLAYER_JOINED = 'player:joined',
  PLAYER_LEFT = 'player:left',
  SPECTATOR_JOINED = 'spectator:joined',
- SPECTATOR_LEFT = 'spectator:left'
+ SPECTATOR_LEFT = 'spectator:left',
+ PLAYER_VISIBILITY_CHANGE = 'player:visibility-change'
 }
 
 export type GameEventPayloads = {
@@ -21,6 +22,7 @@ export type GameEventPayloads = {
  [GameEvent.PLAYER_LEFT]: { roomId: string; playerId: string };
  [GameEvent.SPECTATOR_JOINED]: { roomId: string; username: string };
  [GameEvent.SPECTATOR_LEFT]: { roomId: string; username: string };
+ [GameEvent.PLAYER_VISIBILITY_CHANGE]: { roomId: string; username: string; isVisible: boolean };
 };
 
 export class GameEventEmitter extends EventEmitter {

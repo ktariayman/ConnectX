@@ -34,4 +34,5 @@ export interface IGameService {
  requestRematch(roomId: string, username: string): Promise<void>;
  handleForfeit(roomId: string, username: string, reason: string): Promise<void>;
  checkTimeouts(): Promise<void>;
+ updatePlayerVisibility(roomId: string, username: string, isVisible: boolean): Promise<void>;
 }

@@ -16,6 +16,8 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     return;
    }
 
+   await gameService.updatePlayerVisibility(roomId, username, true);
+
    socket.join(roomId);
    socket.data.roomId = roomId;
    socket.data.username = result.username;
@@ -80,10 +82,10 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    if (isSpectator) {
     await roomService.leaveAsSpectator(socket.id, username);
    } else {
-    const { room } = await roomService.leaveRoom(socket.id, username);
-    if (room?.gameState.status === GAME_STATUS.IN_PROGRESS) {
-     await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
-    }
+    // When a player leaves the page for navigation only to mark as not visible
+    // it's quite  different from a permanent leave because this will allow user to rejoin however the game will continue until timeout 
+    // the other is when user leaves the page intentionally to mark as away ( he'll lost the game ofc)
+    await gameService.updatePlayerVisibility(roomId, username, false);
    }
    socket.leave(roomId);
   }
@@ -97,13 +99,26 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
   }
  });
 
+ socket.on('room:forfeit', async () => {
+  const { roomId, username } = socket.data;
+  if (roomId && username) {
+   const { room } = await roomService.leaveRoom(socket.id, username);
+   if (room?.gameState.status === GAME_STATUS.IN_PROGRESS) {
+    await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
+   }
+   socket.leave(roomId);
+  }
+ });
+
  socket.on('disconnect', async () => {
   const { roomId, username, isSpectator } = socket.data;
   if (roomId && username) {
    if (isSpectator) {
     await roomService.leaveAsSpectator(socket.id, username);
    } else {
-    await gameService.handleForfeit(roomId, username, 'OPPONENT_DISCONNECTED');
+    // Don't forfeit immediately, just mark as disconnected/not-visible
+    // The game will continue until turn timeout
+    await gameService.updatePlayerVisibility(roomId, username, false);
    }
   }
  });

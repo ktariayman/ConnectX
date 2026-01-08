@@ -19,6 +19,7 @@ export interface Player {
  id: string; // This is the username
  color: PlayerColor;
  isReady: boolean;
+ isVisible?: boolean;
 }
 
 export interface GameState {

@@ -26,6 +26,13 @@ export function setupGameHandlers(io: Server, socket: Socket) {
    await gameService.requestRematch(roomId, username);
   }
  });
+
+ socket.on('game:visibility-change', async (data: { isVisible: boolean }) => {
+  const { roomId, username } = socket.data;
+  if (roomId && username) {
+   await gameService.updatePlayerVisibility(roomId, username, data.isVisible);
+  }
+ });
 }
 
 export function setupGameDomainListeners(io: Server) {
@@ -39,5 +46,9 @@ export function setupGameDomainListeners(io: Server) {
 
  gameEvents.onEvent(GameEvent.GAME_OVER, ({ roomId, gameState, reason }) => {
   io.to(roomId).emit('game:over', { gameState, reason });
+ });
+
+ gameEvents.onEvent(GameEvent.PLAYER_VISIBILITY_CHANGE, ({ roomId, username, isVisible }) => {
+  io.to(roomId).emit('game:player-visibility-change', { username, isVisible });
  });
 }

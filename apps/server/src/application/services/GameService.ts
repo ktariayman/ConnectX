@@ -124,6 +124,19 @@ export class GameService implements IGameService {
   }
  }
 
+ async updatePlayerVisibility(roomId: string, username: string, isVisible: boolean): Promise<void> {
+  const room = await this.roomRepository.findById(roomId);
+  if (!room) return;
+
+  const player = room.players.get(username);
+  if (player) {
+   player.isVisible = isVisible;
+   await this.roomRepository.save(room);
+   gameEvents.emitEvent(GameEvent.PLAYER_VISIBILITY_CHANGE, { roomId, username, isVisible });
+   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
+  }
+ }
+
  async requestRematch(roomId: string, username: string): Promise<void> {
   // This is essentially setPlayerReady when state is FINISHED
   return this.setPlayerReady(roomId, username);
