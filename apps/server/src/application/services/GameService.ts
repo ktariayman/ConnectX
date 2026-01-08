@@ -151,7 +151,7 @@ export class GameService implements IGameService {
  }
 
  private clearTurnTimeout(roomId: string) {
-  this.schedulerService.cancel(roomId);
+  this.schedulerService.cancelLastScheduled(roomId);
  }
 
  private async finishGame(room: Room, winner: GameResult, cells: [number, number][] | null, reason: string) {

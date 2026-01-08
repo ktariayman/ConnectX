@@ -2,7 +2,7 @@ export class SchedulerService {
  private timers: Map<string, NodeJS.Timeout> = new Map();
 
  schedule(key: string, durationMs: number, callback: () => void | Promise<void>) {
-  this.cancel(key);
+  this.cancelLastScheduled(key);
 
   const timeout = setTimeout(async () => {
    try {
@@ -17,7 +17,7 @@ export class SchedulerService {
   this.timers.set(key, timeout);
  }
 
- cancel(key: string) {
+ cancelLastScheduled(key: string) {
   const timeout = this.timers.get(key);
   if (timeout) {
    clearTimeout(timeout);
