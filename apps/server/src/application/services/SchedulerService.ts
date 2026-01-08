@@ -1,3 +1,6 @@
+import { injectable } from 'inversify';
+
+@injectable()
 export class SchedulerService {
  private timers: Map<string, NodeJS.Timeout> = new Map();
 

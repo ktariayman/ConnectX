@@ -5,10 +5,14 @@ import { IRoomService } from '../../domain/ports/IServices';
 import { gameEvents, GameEvent } from '../../domain/events/GameEventEmitter';
 import { UserService } from './UserService';
 
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../types';
+
+@injectable()
 export class RoomService implements IRoomService {
  constructor(
-  private roomRepository: IRoomRepository,
-  private userService: UserService
+  @inject(TYPES.RoomRepository) private roomRepository: IRoomRepository,
+  @inject(TYPES.UserService) private userService: UserService
  ) { }
 
  async createRoom(

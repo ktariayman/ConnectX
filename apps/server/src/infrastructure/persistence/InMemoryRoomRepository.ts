@@ -1,6 +1,8 @@
 import { Room } from '@connect-x/shared';
 import { IRoomRepository } from '../../domain/ports/IRoomRepository';
+import { injectable } from 'inversify';
 
+@injectable()
 export class InMemoryRoomRepository implements IRoomRepository {
  private rooms: Map<string, Room> = new Map();
  private activeSessions: Map<string, string> = new Map();

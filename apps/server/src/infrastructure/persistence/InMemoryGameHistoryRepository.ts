@@ -1,6 +1,8 @@
 import { GameHistory } from '@connect-x/shared';
 import { IGameHistoryRepository } from '../../domain/ports/IGameHistoryRepository';
+import { injectable } from 'inversify';
 
+@injectable()
 export class InMemoryGameHistoryRepository implements IGameHistoryRepository {
  private games: Map<string, GameHistory> = new Map();
 

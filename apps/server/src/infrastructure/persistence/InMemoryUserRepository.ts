@@ -1,6 +1,8 @@
 import { User } from '@connect-x/shared';
 import { IUserRepository } from '../../domain/ports/IUserRepository';
+import { injectable } from 'inversify';
 
+@injectable()
 export class InMemoryUserRepository implements IUserRepository {
  private users: Map<string, User> = new Map();
 

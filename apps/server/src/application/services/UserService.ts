@@ -1,8 +1,12 @@
 import { User } from '@connect-x/shared';
 import { IUserRepository } from '../../domain/ports/IUserRepository';
 
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../types';
+
+@injectable()
 export class UserService {
- constructor(private userRepository: IUserRepository) { }
+ constructor(@inject(TYPES.UserRepository) private userRepository: IUserRepository) { }
 
  async register(username: string): Promise<User> {
   const trimmedUsername = username.trim().toLowerCase();

@@ -20,11 +20,15 @@ import { gameEvents, GameEvent } from '../../domain/events/GameEventEmitter';
 import { v4 as uuidv4 } from 'uuid';
 import { SchedulerService } from './SchedulerService';
 
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../../types';
+
+@injectable()
 export class GameService implements IGameService {
  constructor(
-  private roomRepository: IRoomRepository,
-  private gameHistoryRepository: IGameHistoryRepository,
-  private schedulerService: SchedulerService
+  @inject(TYPES.RoomRepository) private roomRepository: IRoomRepository,
+  @inject(TYPES.GameHistoryRepository) private gameHistoryRepository: IGameHistoryRepository,
+  @inject(TYPES.SchedulerService) private schedulerService: SchedulerService
  ) { }
 
  async setPlayerReady(roomId: string, username: string): Promise<void> {
