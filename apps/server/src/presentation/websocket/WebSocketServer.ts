@@ -2,12 +2,10 @@ import { Server, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { setupRoomHandlers, setupRoomDomainListeners } from './handlers/roomHandlers';
 import { setupGameHandlers, setupGameDomainListeners } from './handlers/gameHandlers';
-import { gameService } from '../../registry';
 
 export class WebSocketServer {
  private static instance: WebSocketServer;
  private io: Server;
- private heartbeatInterval: NodeJS.Timeout | null = null;
 
  private constructor(httpServer: HttpServer) {
   this.io = new Server(httpServer, {
@@ -23,7 +21,6 @@ export class WebSocketServer {
 
   // Initialize Connection Handlers (Incoming)
   this.setupConnectionHandlers();
-  this.startHeartbeat();
  }
 
  public static init(httpServer: HttpServer): WebSocketServer {
@@ -58,19 +55,6 @@ export class WebSocketServer {
  }
 
  public stop(): void {
-  if (this.heartbeatInterval) {
-   clearInterval(this.heartbeatInterval);
-  }
   this.io.close();
- }
-
- private startHeartbeat() {
-  this.heartbeatInterval = setInterval(async () => {
-   try {
-    await gameService.checkTimeouts();
-   } catch (error) {
-    console.error(' [Heartbeat] Error during timeout check:', error);
-   }
-  }, 1000);
  }
 }
