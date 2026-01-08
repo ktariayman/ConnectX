@@ -17,12 +17,17 @@ export class DocumentationProvider {
         }
 
         // Read the Socket API Markdown to include it in the description
-        const socketApiDocPath = join(__dirname, '../../../../SOCKET_API.md');
+        const socketApiDocPath = join(__dirname, '../../../SOCKET_API.md');
         let socketDoc = '';
         try {
-            socketDoc = fs.readFileSync(socketApiDocPath, 'utf-8');
+            if (fs.existsSync(socketApiDocPath)) {
+                socketDoc = fs.readFileSync(socketApiDocPath, 'utf-8');
+                console.log('✅ SOCKET_API.md loaded successfully');
+            } else {
+                console.warn(`⚠️ SOCKET_API.md not found at: ${socketApiDocPath}`);
+            }
         } catch (err) {
-            console.warn('Could not load SOCKET_API.md', err);
+            console.error('❌ Error loading SOCKET_API.md:', err);
         }
 
         const options = {
@@ -30,7 +35,10 @@ export class DocumentationProvider {
                 version: '1.0.0',
                 title: 'ConnectX API & Events',
                 description: `
-## API Documentation for ConnectX
+## 🚀 ConnectX API Documentation
+
+This documentation covers both **REST API endpoints** and **WebSocket events** for the ConnectX game server.
+
 ---
 
 ${socketDoc}
