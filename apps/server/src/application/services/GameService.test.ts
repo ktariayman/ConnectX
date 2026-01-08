@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameService } from './GameService';
 import { InMemoryRoomRepository } from '../../infrastructure/persistence/InMemoryRoomRepository';
 import { DEFAULT_BOARD_CONFIG, DIFFICULTY_LEVELS_KEYS, GAME_RESULT, GAME_STATUS } from '@connect-x/shared';
 import { RoomService } from './RoomService';
 import { userService } from '../../registry';
 import { InMemoryGameHistoryRepository } from '../../infrastructure/persistence/InMemoryGameHistoryRepository';
+import { SchedulerService } from './SchedulerService';
 
 describe('GameService', () => {
  let gameService: GameService;
@@ -13,7 +14,12 @@ describe('GameService', () => {
 
  beforeEach(() => {
   repository = new InMemoryRoomRepository();
-  gameService = new GameService(repository, new InMemoryGameHistoryRepository());
+  const mockScheduler = {
+   schedule: vi.fn(),
+   cancelLastScheduled: vi.fn(),
+  } as unknown as SchedulerService;
+
+  gameService = new GameService(repository, new InMemoryGameHistoryRepository(), mockScheduler);
   roomService = new RoomService(repository, userService);
  });
 
