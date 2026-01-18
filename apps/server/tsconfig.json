@@ -5,7 +5,8 @@
     "rootDir": "./src",
     "declaration": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "types": ["reflect-metadata"]
   },
   "include": ["src/**/*"]
 }

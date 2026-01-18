@@ -6,4 +6,5 @@ export const TYPES = {
  GameService: Symbol.for('GameService'),
  SchedulerService: Symbol.for('SchedulerService'),
  UserService: Symbol.for('UserService'),
+ RedisConnection: Symbol.for('RedisConnection'),
 };
