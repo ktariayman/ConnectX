@@ -39,43 +39,45 @@ jobs:
           pnpm lint
           pnpm test
 
-  # build-and-push:
-  #   needs: lint-and-test
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
+  build-and-push:
+    needs: lint-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
       
-  #   steps:
-  #     - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-  #     - name: Set lowercase image names
-  #       run: |
-  #         echo "IMAGE_NAME_SERVER=$(echo ${{ env.IMAGE_NAME_SERVER }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-  #         echo "IMAGE_NAME_CLIENT=$(echo ${{ env.IMAGE_NAME_CLIENT }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Set lowercase image names
+        run: |
+          echo "IMAGE_NAME_SERVER=$(echo ${{ env.IMAGE_NAME_SERVER }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_NAME_CLIENT=$(echo ${{ env.IMAGE_NAME_CLIENT }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-  #     - name: Log in to the Container registry
-  #       uses: docker/login-action@v3
-  #       with:
-  #         registry: ${{ env.REGISTRY }}
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  #     - name: Build and push Server image
-  #       uses: docker/build-push-action@v5
-  #       with:
-  #         context: .
-  #         file: apps/server/Dockerfile
-  #         target: production
-  #         push: true
-  #         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SERVER }}:latest
+      - name: Build and push Server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/server/Dockerfile
+          target: production
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SERVER }}:latest
 
-  #     - name: Build and push Client image
-  #       uses: docker/build-push-action@v5
-  #       with:
-  #         context: .
-  #         file: apps/client/Dockerfile
-  #         target: production
-  #         push: true
-  #         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_CLIENT }}:latest
+      - name: Build and push Client image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/client/Dockerfile
+          target: production
+          build-args: |
+             VITE_API_URL=http://localhost:4000
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_CLIENT }}:latest
