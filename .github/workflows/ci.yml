@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 env:
-  IMAGE_NAME_SERVER: ktariayman/connectx-server
-  IMAGE_NAME_CLIENT: ktariayman/connectx-client
+  IMAGE_NAME_SERVER: ktariayman879/connectx-server
+  IMAGE_NAME_CLIENT: ktariayman879/connectx-client
 
 jobs:
   lint-and-test:

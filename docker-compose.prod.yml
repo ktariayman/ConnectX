@@ -4,7 +4,7 @@ services:
     #   context: .
     #   dockerfile: apps/server/Dockerfile
     #   target: production
-    image: ktariayman/connectx-server:latest
+    image: ktariayman879/connectx-server:latest
     ports:
       - "4000:4000"
     environment:
@@ -28,7 +28,7 @@ services:
     #   target: production
     #   args:
     #     - VITE_API_URL=http://localhost:4000
-    image: ktariayman/connectx-client:latest
+    image: ktariayman879/connectx-client:latest
     depends_on:
       - server
     ports:
