@@ -12,6 +12,16 @@ services:
       - PORT=4000
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      # Security & Config
+      - ALLOWED_ORIGINS=http://localhost:5173
+      - CORS_ORIGIN=http://localhost:5173
+      # Game Logic
+      - DEFAULT_TURN_TIMEOUT=30
+      - LOG_LEVEL=info
+      # Session & Data Defaults
+      - SESSION_TTL=86400
+      - ROOM_TTL=3600
+      - GAME_HISTORY_TTL=2592000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/api/health"]
       interval: 10s
