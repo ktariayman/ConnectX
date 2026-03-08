@@ -14,11 +14,14 @@ const styles = {
   modalHeader: 'mb-6',
   subtitle: 'text-sm text-muted-foreground mt-1',
   field: 'mb-4',
+  label: 'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block',
+  input: 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200',
+  select: 'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
   error: 'text-sm text-destructive bg-destructive/10 p-3 rounded mb-4',
   actions: 'flex gap-3 justify-end mt-6',
   gameTypeOptions: 'flex gap-3',
-  radioLabel: 'flex items-center gap-2 cursor-pointer',
-  checkbox: 'flex items-center gap-2 cursor-pointer',
+  radioLabel: 'flex items-center gap-2 cursor-pointer bg-secondary/50 p-2 rounded-md border border-transparent hover:border-primary/20 transition-all',
+  checkbox: 'flex items-center gap-2 cursor-pointer select-none',
 };
 
 Modal.setAppElement('#root');
@@ -82,26 +85,31 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
       <form onSubmit={handleSubmit}>
 
         <div className={styles.field}>
-          <label>Game Type (Connect X)</label>
+          <label className={styles.label}>Game Type (Connect X)</label>
           <div className={styles.gameTypeOptions}>
             {[4, 5, 6].map((num) => (
-              <label key={num} className={styles.radioLabel}>
+              <label key={num} className={`${styles.radioLabel} ${connectCount === num ? 'bg-primary/10 border-primary' : 'bg-card border-border'}`}>
                 <input
                   type="radio"
                   name="connectCount"
                   value={num}
                   checked={connectCount === num}
                   onChange={() => setConnectCount(num)}
+                  className="accent-primary w-4 h-4"
                 />
-                Connect {num}
+                <span className="text-sm font-medium">Connect {num}</span>
               </label>
             ))}
           </div>
         </div>
 
         <div className={styles.field}>
-          <label>Difficulty</label>
-          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)}>
+          <label className={styles.label}>Difficulty</label>
+          <select 
+            value={difficulty} 
+            onChange={(e) => setDifficulty(e.target.value as any)}
+            className={styles.select}
+          >
             <option value="EASY">Easy (60s turn)</option>
             <option value="MEDIUM">Medium (30s turn)</option>
             <option value="HARD">Hard (15s turn)</option>
@@ -114,8 +122,9 @@ export function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
               type="checkbox"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
+              className="w-4 h-4 rounded border-primary text-primary focus:ring-primary accent-primary"
             />
-            Make room public
+            <span className="text-sm font-medium">Make room public</span>
           </label>
         </div>
 

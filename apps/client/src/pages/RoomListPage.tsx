@@ -35,6 +35,8 @@ export function RoomListPage() {
     handleSpectateRoom,
   } = useRoomList();
 
+
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -141,7 +143,7 @@ export function RoomListPage() {
               {replays.slice(0, 10).map((game: any) => (
                 <div key={game.id} className={styles.roomCard}>
                   <div className={styles.roomInfo}>
-                    <h3>Game #{game.roomId.slice(0, 4)}</h3>
+                    <h3>Match #{game.id.slice(0, 4)} <span className="text-muted-foreground font-normal text-xs">(Room #{game.roomId.slice(0, 4)})</span></h3>
                     <div className={styles.details}>
                       <div className={styles.stat}>
                         <label>Players</label>

@@ -129,11 +129,11 @@ export function GamePage() {
                   className={`
                     ${styles.playerCard}
                     ${isActive && gameState.status === GAME_STATUS.IN_PROGRESS ? styles.active : ''}
-                    ${isWinner ? styles.winner : ''}
+                    ${isWinner ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-background' : ''}
                     ${!player.isReady && gameState.status === GAME_STATUS.FINISHED ? 'opacity-50' : ''}
                   `}
                 >
-                  <div className={`w-3 h-3 rounded-full ${player.color === PLAYER_COLOR.RED ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                  <div className={`w-3 h-3 rounded-full ${player.color === PLAYER_COLOR.RED ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]'}`} />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">
                       {player.id === playerId ? 'You' : `Player ${player.id.slice(0, 4)}`}
@@ -155,7 +155,7 @@ export function GamePage() {
           <div className={styles.turnInfo}>
             {gameState.status === GAME_STATUS.IN_PROGRESS ? (
               <div className="flex flex-col gap-1">
-                <span className={currentPlayer?.color === PLAYER_COLOR.RED ? 'text-red-500' : 'text-yellow-500'}>
+                <span className={currentPlayer?.color === PLAYER_COLOR.RED ? 'text-rose-500 font-bold text-lg' : 'text-amber-500 font-bold text-lg'}>
                   {currentPlayer?.id === playerId ? "Your Turn" : `${currentPlayer?.id.slice(0, 4)}'s Turn`}
                 </span>
                  {typeof timeLeft === 'number' && (
@@ -184,7 +184,7 @@ export function GamePage() {
              {gameState.moveHistory.map((move, i) => (
                <div key={i} className="flex items-center gap-2 text-muted-foreground">
                  <span className="opacity-50">#{i + 1}</span>
-                 <span className={move.player === PLAYER_TYPE.PLAYER_1 ? 'text-red-500' : 'text-yellow-500'}>
+                 <span className={move.player === PLAYER_TYPE.PLAYER_1 ? 'text-rose-500' : 'text-amber-500'}>
                    {move.player === PLAYER_TYPE.PLAYER_1 ? 'Red' : 'Yellow'}
                  </span>
                  <span>dropped in col {move.column + 1}</span>
@@ -205,9 +205,18 @@ export function GamePage() {
         overlayClassName={styles.modalOverlay}
       >
         <h2 className={styles.result}>
-          {gameState.winner ? 
-            (gameState.winner === playerId ? 'You Won!' : 'You Lost!') :
-            'Draw!'}
+          {(() => {
+            if (gameState.winner === GAME_RESULT.DRAW) return 'Draw!';
+            
+            const playerIds = Array.from(room.players.keys());
+            const winnerId = gameState.winner === GAME_RESULT.PLAYER_1 
+              ? playerIds[0] 
+              : gameState.winner === GAME_RESULT.PLAYER_2 
+                ? playerIds[1] 
+                : null;
+            
+            return winnerId === playerId ? 'You Won!' : 'You Lost!';
+          })()}
         </h2>
         
         {gameOverReason && (

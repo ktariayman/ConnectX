@@ -2,10 +2,10 @@ import { CellState } from '@connect-x/shared';
 import { Cell } from './Cell';
 
 const styles = {
-  board: 'inline-block bg-gradient-to-tr from-slate-800 to-gray-900 p-6 rounded-2xl shadow-2xl border-4 border-slate-700/50 backdrop-blur-sm ring-1 ring-white/10',
+  board: 'inline-block bg-black/20 p-6 rounded-3xl shadow-2xl backdrop-blur-xl border border-white/10 ring-1 ring-white/5',
   grid: 'flex gap-3',
-  column: 'flex flex-col gap-3 cursor-pointer hover:brightness-110 transition-all duration-300 overflow-hidden py-2',
-  disabled: 'cursor-not-allowed opacity-80 grayscale-[0.2]',
+  column: 'flex flex-col gap-3 cursor-pointer hover:bg-white/5 rounded-full transition-colors duration-200 p-2',
+  disabled: 'cursor-not-allowed opacity-80',
 };
 
 interface BoardProps {

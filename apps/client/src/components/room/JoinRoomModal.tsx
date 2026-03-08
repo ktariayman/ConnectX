@@ -11,6 +11,8 @@ const styles = {
   modalHeader: 'mb-6',
   subtitle: 'text-sm text-muted-foreground mt-1',
   field: 'mb-4',
+  label: 'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block',
+  input: 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200',
   error: 'text-sm text-destructive bg-destructive/10 p-3 rounded mb-4',
   actions: 'flex gap-3 justify-end mt-6',
   gameTypeOptions: 'flex gap-3',
@@ -144,9 +146,10 @@ export function JoinRoomModal({ isOpen, onClose }: JoinRoomModalProps) {
       <form onSubmit={handleSubmit}>
 
         <div className={styles.field}>
-          <label>Room ID</label>
+          <label className={styles.label}>Room ID</label>
           <input
             type="text"
+            className={styles.input}
             value={roomId}
             onChange={(e) => setRoomId(e.target.value)}
             placeholder="Enter room ID"

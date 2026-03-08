@@ -55,7 +55,7 @@ export default {
     sm: "calc(var(--radius) - 4px)",
    },
    fontFamily: {
-    sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'sans-serif'],
+    sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'sans-serif'],
     mono: ['SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', 'monospace'],
    },
   },

@@ -56,6 +56,11 @@ export function useGameRoom(roomId: string | undefined, isSpectatorMode: boolean
    if (newGameState) {
     const convertedGameState = transformGameState(newGameState);
     setGameState(convertedGameState);
+
+    if (convertedGameState.status !== GAME_STATUS.FINISHED) {
+     setShowResultModal(false);
+     setGameOverReason(null);
+    }
    }
 
    if (data.context) {
@@ -78,7 +83,8 @@ export function useGameRoom(roomId: string | undefined, isSpectatorMode: boolean
   };
 
   const handleGameStarted = () => {
-   // Game started
+   setShowResultModal(false);
+   setGameOverReason(null);
   };
 
   const handleGameOver = (data: any) => {
