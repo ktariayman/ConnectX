@@ -35,7 +35,6 @@ export class GameService implements IGameService {
   const room = await this.roomRepository.findById(roomId);
   if (!room) return;
 
-  // Handle rematch reset if game was finished
   if (room.gameState.status === GAME_STATUS.FINISHED) {
    this.resetRoomForRematch(room);
   }
@@ -47,6 +46,7 @@ export class GameService implements IGameService {
 
   if (room.players.size === 2 && Array.from(room.players.values()).every((p: Player) => p.isReady)) {
    room.gameState.status = GAME_STATUS.IN_PROGRESS;
+   room.gameStartedAt = new Date();
    room.turnStartedAt = new Date();
    gameEvents.emitEvent(GameEvent.GAME_STARTED, { roomId, gameState: room.gameState });
    this.scheduleTurnTimeout(roomId, room.difficulty);
@@ -59,7 +59,6 @@ export class GameService implements IGameService {
  async makeMove(roomId: string, username: string, column: number): Promise<void> {
   const room = await this.roomRepository.findById(roomId);
   if (!room || room.gameState.status !== GAME_STATUS.IN_PROGRESS) return;
-  // first thing first we do it clean the timeout in order to start a new timer
   this.clearTurnTimeout(roomId);
   const playerIds = Array.from(room.players.keys());
   const currentPlayerIndex = room.gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? 0 : 1;
@@ -170,7 +169,7 @@ export class GameService implements IGameService {
    config: room.config,
    difficulty: room.difficulty,
    moveHistory: room.gameState.moveHistory,
-   createdAt: room.createdAt,
+   createdAt: room.gameStartedAt ?? room.createdAt,
    finishedAt: new Date(),
   };
 
@@ -188,6 +187,7 @@ export class GameService implements IGameService {
    winningCells: null,
    moveHistory: [],
   };
+  room.gameStartedAt = null;
   room.turnStartedAt = null;
   for (const player of room.players.values()) {
    player.isReady = false;

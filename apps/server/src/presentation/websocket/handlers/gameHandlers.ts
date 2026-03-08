@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { MakeMoveSchema } from '@connect-x/shared';
 import { gameService } from '../../../registry';
 import { gameEvents, GameEvent } from '../../../domain/events/GameEventEmitter';
+import { getErrorMessage } from '../../../application/utils/errors';
 
 export function setupGameHandlers(io: Server, socket: Socket) {
  socket.on('game:move', async (data) => {
@@ -15,8 +16,8 @@ export function setupGameHandlers(io: Server, socket: Socket) {
    }
 
    await gameService.makeMove(roomId, username, column);
-  } catch (error: any) {
-   socket.emit('error', { code: 'MOVE_ERROR', message: error.message });
+  } catch (error: unknown) {
+   socket.emit('error', { code: 'MOVE_ERROR', message: getErrorMessage(error) });
   }
  });
 

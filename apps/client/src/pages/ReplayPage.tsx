@@ -68,19 +68,27 @@ export function ReplayPage() {
         </div>
 
         <div className={styles.moveInfo}>
-          {currentPlayer ? (
-            <>
-              <span className={styles.player} style={{ color: currentPlayer === PLAYER_COLOR.RED ? '#ef4444' : '#3b82f6' }}>
-                {currentPlayer} Player
+          {currentPlayer && currentMove ? (
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold ${
+                  currentPlayer === PLAYER_COLOR.RED
+                    ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                    : 'bg-amber-400/10 text-amber-500 border border-amber-400/20'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${currentPlayer === PLAYER_COLOR.RED ? 'bg-red-500' : 'bg-amber-400'}`} />
+                {currentPlayer === PLAYER_COLOR.RED ? 'Red' : 'Yellow'}
               </span>
-              {currentMove && (
-                <span className={styles.timestamp}>
-                  {new Date(currentMove.timestamp).toLocaleTimeString()}
-                </span>
-              )}
-            </>
+              <span className="text-sm text-muted-foreground">
+                Move <strong>{controls.currentMove + 1}</strong> — Column <strong>{currentMove.column + 1}</strong>
+              </span>
+              <span className={styles.timestamp}>
+                {new Date(currentMove.timestamp).toLocaleTimeString()}
+              </span>
+            </div>
           ) : (
-            <span className={styles.initial}>Initial State</span>
+            <span className={styles.initial}>⬤ Initial board state</span>
           )}
         </div>
 

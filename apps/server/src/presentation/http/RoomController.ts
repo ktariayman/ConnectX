@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { roomService, userService } from '../../registry';
 import { RoomCreateSchema, RoomJoinSchema, DEFAULT_BOARD_CONFIG } from '@connect-x/shared';
 import { z } from 'zod';
+import { getErrorMessage } from '../../application/utils/errors';
 
 export class RoomController {
  /**
@@ -24,8 +25,8 @@ export class RoomController {
     roomId: result.room.id,
     playerId: result.username
    });
-  } catch (error: any) {
-   return res.status(400).json({ error: error.message || 'Invalid data' });
+  } catch (error: unknown) {
+   return res.status(400).json({ error: getErrorMessage(error) });
   }
  }
 
@@ -45,8 +46,8 @@ export class RoomController {
     roomId,
     playerId: result.username
    });
-  } catch (error: any) {
-   return res.status(400).json({ error: error.message || 'Invalid data' });
+  } catch (error: unknown) {
+   return res.status(400).json({ error: getErrorMessage(error) });
   }
  }
 
@@ -67,8 +68,8 @@ export class RoomController {
    }));
 
    return res.json(formatted);
-  } catch (error: any) {
-   return res.status(500).json({ error: 'Internal server error' });
+  } catch (error: unknown) {
+   return res.status(500).json({ error: getErrorMessage(error) });
   }
  }
 

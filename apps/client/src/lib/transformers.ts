@@ -11,6 +11,7 @@ export function transformRoomData(roomData: RoomData): Room {
   players: new Map((Array.isArray(roomData.players) ? roomData.players : []).map((p) => [p.id, p])),
   spectators: new Set(Array.isArray(roomData.spectators) ? roomData.spectators : []),
   createdAt: new Date(roomData.createdAt),
+  gameStartedAt: roomData.gameStartedAt ? new Date(roomData.gameStartedAt) : null,
   turnStartedAt: roomData.turnStartedAt ? new Date(roomData.turnStartedAt) : null,
   gameState: transformGameState(roomData.gameState),
  } as unknown as Room;

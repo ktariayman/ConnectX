@@ -1,6 +1,7 @@
 import { Button } from '../components/ui/Button';
-import { GAME_STATUS, GAME_RESULT } from '@connect-x/shared';
+import { GAME_STATUS, GAME_RESULT, GameHistory } from '@connect-x/shared';
 import { useRoomList } from '../hooks/useRoomList';
+import type { RoomSummary } from '../types/socket.types';
 
 const styles = {
   page: 'min-h-screen bg-background p-6',
@@ -52,7 +53,7 @@ export function RoomListPage() {
           </div>
         ) : rooms && rooms.length > 0 ? (
           <div className={styles.roomList}>
-            {rooms.map((room: any) => (
+            {rooms.map((room: RoomSummary) => (
               <div key={room.id} className={styles.roomCard}>
                 <div className={styles.roomInfo}>
                   <h3>Room #{room.id.slice(0, 4)}</h3>
@@ -140,7 +141,7 @@ export function RoomListPage() {
             </div>
           ) : replays && replays.length > 0 ? (
             <div className={styles.roomList}>
-              {replays.slice(0, 10).map((game: any) => (
+              {replays.slice(0, 10).map((game: GameHistory) => (
                 <div key={game.id} className={styles.roomCard}>
                   <div className={styles.roomInfo}>
                     <h3>Match #{game.id.slice(0, 4)} <span className="text-muted-foreground font-normal text-xs">(Room #{game.roomId.slice(0, 4)})</span></h3>

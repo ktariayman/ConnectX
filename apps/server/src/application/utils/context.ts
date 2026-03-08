@@ -18,7 +18,7 @@ export function calculateGameContext(room: Room, playerId: string): GameContext 
  const isSpectator = room.spectators.has(playerId);
 
  const isRedTurn = room.gameState.currentPlayer === PLAYER_TYPE.PLAYER_1;
- const activeColor = isRedTurn ? PLAYER_COLOR.RED : PLAYER_COLOR.BLUE;
+ const activeColor = isRedTurn ? PLAYER_COLOR.RED : PLAYER_COLOR.YELLOW;
  const isMyTurn = !isSpectator && me ? me.color === activeColor : false;
 
  let timeLeft: number | undefined;

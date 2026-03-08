@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Room } from '@connect-x/shared';
 import { Button } from '../ui/Button';
 import { useWaitingRoom } from '../../hooks/useWaitingRoom';
@@ -12,9 +13,9 @@ const styles = {
   playersSection: 'mb-6',
   playerList: 'space-y-3 mt-3',
   playerItem: 'flex items-center gap-3 p-3 bg-secondary rounded-lg',
-  avatar: 'w-12 h-12 rounded-full flex items-center justify-center font-bold text-white',
+  avatar: 'w-12 h-12 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0',
   red: 'bg-red-500',
-  blue: 'bg-blue-500',
+  yellow: 'bg-amber-400',
   playerName: 'flex-1 flex flex-col',
   colorLabel: 'text-xs text-muted-foreground',
   readyBadge: 'px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full',
@@ -24,6 +25,8 @@ const styles = {
   hint: 'text-sm mt-2',
   readySection: 'flex flex-col items-center gap-4',
   waitingText: 'text-center text-muted-foreground',
+  inviteRow: 'flex items-center gap-2 mt-2',
+  inviteCode: 'flex-1 bg-background border border-border rounded px-3 py-1.5 text-sm font-mono truncate',
 };
 
 interface WaitingRoomProps {
@@ -33,6 +36,8 @@ interface WaitingRoomProps {
 }
 
 export function WaitingRoom({ room, currentUserId, onLeave }: WaitingRoomProps) {
+  const [copied, setCopied] = useState(false);
+
   const {
     players,
     spectators,
@@ -43,16 +48,21 @@ export function WaitingRoom({ room, currentUserId, onLeave }: WaitingRoomProps) 
     handleReady,
   } = useWaitingRoom(room, currentUserId);
 
+  const roomUrl = `${window.location.origin}/game/${room.id}`;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(roomUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
         <h1>Waiting Room</h1>
         
         <div className={styles.roomInfo}>
-          <div className={styles.infoRow}>
-            <span>Room ID:</span>
-            <code>{room.id}</code>
-          </div>
           <div className={styles.infoRow}>
             <span>Difficulty:</span>
             <span className={styles.difficulty}>{room.difficulty}</span>
@@ -61,27 +71,39 @@ export function WaitingRoom({ room, currentUserId, onLeave }: WaitingRoomProps) 
             <span>Board:</span>
             <span>{room.config.rows}×{room.config.columns}, Connect {room.config.connectCount}</span>
           </div>
+          <div className="mt-3 pt-3 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-1">Invite a friend — share this link:</p>
+            <div className={styles.inviteRow}>
+              <code className={styles.inviteCode}>{roomUrl}</code>
+              <Button size="sm" variant="outline" onClick={handleCopyLink}>
+                {copied ? '✅ Copied!' : '📋 Copy'}
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className={styles.playersSection}>
           <h3>Players ({players.length}/2)</h3>
           <div className={styles.playerList}>
-            {players.map((player) => (
-              <div key={player.id} className={styles.playerItem}>
-                <div className={`${styles.avatar} ${styles[player.color.toLowerCase() as keyof typeof styles]}`}>
-                  {player.id[0].toUpperCase()}
+            {players.map((player) => {
+              const avatarClass = player.color === 'RED' ? styles.red : styles.yellow;
+              return (
+                <div key={player.id} className={styles.playerItem}>
+                  <div className={`${styles.avatar} ${avatarClass}`}>
+                    {player.id[0].toUpperCase()}
+                  </div>
+                  <div className={styles.playerName}>
+                    <span className="font-medium">{player.id}{player.id === currentUserId && ' (You)'}</span>
+                    <span className={styles.colorLabel}>{player.color === 'RED' ? '🔴 Red' : '🟡 Yellow'} Player</span>
+                  </div>
+                  {player.isReady ? (
+                    <span className={styles.readyBadge}>READY</span>
+                  ) : (
+                    <span className={styles.waitingBadge}>WAITING</span>
+                  )}
                 </div>
-                <div className={styles.playerName}>
-                  <span>{player.id} {player.id === currentUserId && ' (You)'}</span>
-                  <span className={styles.colorLabel}>{player.color} Player</span>
-                </div>
-                {player.isReady ? (
-                  <span className={styles.readyBadge}>READY</span>
-                ) : (
-                  <span className={styles.waitingBadge}>WAITING</span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -95,7 +117,7 @@ export function WaitingRoom({ room, currentUserId, onLeave }: WaitingRoomProps) 
                     {spectatorId[0].toUpperCase()}
                   </div>
                   <div className={styles.playerName}>
-                    <span>{spectatorId} {spectatorId === currentUserId && ' (You)'}</span>
+                    <span className="font-medium">{spectatorId}{spectatorId === currentUserId && ' (You)'}</span>
                     <span className={styles.colorLabel}>Spectator</span>
                   </div>
                   <span className={styles.waitingBadge}>WATCHING</span>
@@ -114,7 +136,7 @@ export function WaitingRoom({ room, currentUserId, onLeave }: WaitingRoomProps) 
           ) : waitingForPlayers ? (
             <div className={styles.waiting}>
               <p>Waiting for another player to join...</p>
-              <p className={styles.hint}>Share the room ID with a friend!</p>
+              <p className={styles.hint}>Share the link above with a friend!</p>
             </div>
           ) : (
             <div className={styles.readySection}>
@@ -124,8 +146,8 @@ export function WaitingRoom({ room, currentUserId, onLeave }: WaitingRoomProps) 
                 </Button>
               ) : (
                 <p className={styles.waitingText}>
-                  {otherPlayerSet && !otherPlayerSet.isReady 
-                    ? `Waiting for ${otherPlayerSet.id} to be ready...` 
+                  {otherPlayerSet && !otherPlayerSet.isReady
+                    ? `Waiting for ${otherPlayerSet.id} to be ready...`
                     : 'Waiting for other player...'}
                 </p>
               )}

@@ -36,7 +36,7 @@ export type GameResult = keyof typeof GAME_RESULT;
 // Player Color
 export const PLAYER_COLOR = {
  RED: 'RED',
- BLUE: 'BLUE',
+ YELLOW: 'YELLOW',
 } as const;
 
 export type PlayerColor = keyof typeof PLAYER_COLOR;

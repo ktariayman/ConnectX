@@ -32,8 +32,8 @@ export const RoomSyncSchema = z.object({
  room: z.any(),
  context: z.object({
   isMyTurn: z.boolean(),
-  myColor: z.enum([PLAYER_COLOR.RED, PLAYER_COLOR.BLUE]).optional(),
-  activeColor: z.enum([PLAYER_COLOR.RED, PLAYER_COLOR.BLUE]).optional(),
+  myColor: z.enum([PLAYER_COLOR.RED, PLAYER_COLOR.YELLOW]).optional(),
+  activeColor: z.enum([PLAYER_COLOR.RED, PLAYER_COLOR.YELLOW]).optional(),
   opponentName: z.string().optional(),
   status: z.string(),
   timeLeft: z.number().int().optional(),

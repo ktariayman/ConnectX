@@ -11,7 +11,7 @@ import config from './config';
 const app = express();
 const httpServer = createServer(app);
 
-app.use(cors());
+app.use(cors({ origin: config.allowedOrigins }));
 app.use(express.json());
 
 DocumentationProvider.init(app);

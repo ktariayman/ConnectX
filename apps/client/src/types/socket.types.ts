@@ -9,11 +9,23 @@ export interface RoomUpdateData {
  players?: PlayerData[];
 }
 
+/** Shape returned by GET /api/rooms (list endpoint) */
+export interface RoomSummary {
+ id: string;
+ playerCount: number;
+ playerIds: string[];
+ spectatorCount: number;
+ status: string;
+ difficulty: string;
+ config: { rows: number; columns: number; connectCount: number };
+}
+
 export interface RoomData {
  id: string;
  players: PlayerData[];
  spectators?: string[];
  createdAt: string;
+ gameStartedAt?: string | null;
  turnStartedAt?: string | null;
  difficulty: string;
  config: any;

@@ -115,7 +115,7 @@ export function useReplay(roomId: string | undefined) {
  };
 
  const currentMove = currentMoveIndex >= 0 ? moveHistory[currentMoveIndex] : null;
- const currentPlayer = currentMove?.player === CELL_STATE.PLAYER_1 ? PLAYER_COLOR.RED : currentMove?.player === CELL_STATE.PLAYER_2 ? PLAYER_COLOR.BLUE : null;
+ const currentPlayer = currentMove?.player === CELL_STATE.PLAYER_1 ? PLAYER_COLOR.RED : currentMove?.player === CELL_STATE.PLAYER_2 ? PLAYER_COLOR.YELLOW : null;
 
  return {
   navigate,

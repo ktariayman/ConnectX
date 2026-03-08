@@ -1,11 +1,19 @@
 import { Server, Socket } from 'socket.io';
 import { GAME_STATUS, RoomJoinSchema } from '@connect-x/shared';
-import { roomService, gameService, userService } from '../../../registry';
+import { roomService, gameService, userService, schedulerService } from '../../../registry';
 import { gameEvents, GameEvent } from '../../../domain/events/GameEventEmitter';
 import { calculateGameContext } from '../../../application/utils/context';
 
+/** C1: Grace period (ms) before a disconnected player is forfeited */
+const DISCONNECT_GRACE_MS = 30_000;
+
 export function setupRoomHandlers(io: Server, socket: Socket) {
+ // C4: Track whether this socket has already joined a room to prevent duplicate emits
+ let hasJoined = false;
+
  socket.on('room:join', async (data) => {
+  // C4: Skip duplicate join attempts for the same socket
+  if (hasJoined) return;
   try {
    const { roomId, username } = RoomJoinSchema.parse(data);
    await userService.register(username);
@@ -16,6 +24,11 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     return;
    }
 
+   hasJoined = true;
+
+   // C1: Cancel any pending disconnect forfeit for this player
+   schedulerService.cancelLastScheduled(`disconnect:${roomId}:${username}`);
+
    await gameService.updatePlayerVisibility(roomId, username, true);
 
    socket.join(roomId);
@@ -23,13 +36,15 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    socket.data.username = result.username;
    socket.data.isSpectator = false;
 
-   // Send initial state to the joined player
+   // Send initial state — includes turnStartedAt so client can sync timer on reconnect (C3)
    socket.emit('room:updated', {
-    playerId: result.username, // Kept for frontend compatibility
+    playerId: result.username,
     room: {
      ...result.room,
-     players: Array.from(result.room.players.values())
+     players: Array.from(result.room.players.values()),
+     turnStartedAt: result.room.turnStartedAt?.toISOString() ?? null,
     },
+    turnStartedAt: result.room.turnStartedAt?.toISOString() ?? null,
     context: calculateGameContext(result.room, result.username)
    });
 
@@ -37,6 +52,7 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    socket.emit('error', { code: 'INVALID_DATA', message: error.message });
   }
  });
+
  socket.on('room:spectate', async (data) => {
   try {
    const { roomId, username } = RoomJoinSchema.parse(data);
@@ -82,12 +98,11 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    if (isSpectator) {
     await roomService.leaveAsSpectator(socket.id, username);
    } else {
-    // When a player leaves the page for navigation only to mark as not visible
-    // it's quite  different from a permanent leave because this will allow user to rejoin however the game will continue until timeout 
-    // the other is when user leaves the page intentionally to mark as away ( he'll lost the game ofc)
+    // Intentional leave during a game = mark as invisible, game turn timer handles forfeit
     await gameService.updatePlayerVisibility(roomId, username, false);
    }
    socket.leave(roomId);
+   hasJoined = false;
   }
  });
 
@@ -107,6 +122,7 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
    }
    socket.leave(roomId);
+   hasJoined = false;
   }
  });
 
@@ -116,9 +132,24 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    if (isSpectator) {
     await roomService.leaveAsSpectator(socket.id, username);
    } else {
-    // Don't forfeit immediately, just mark as disconnected/not-visible
-    // The game will continue until turn timeout
+    // Mark as disconnected / not visible immediately
     await gameService.updatePlayerVisibility(roomId, username, false);
+
+    // C1: Schedule a grace-period forfeit — player can reconnect within 30s to cancel it
+    schedulerService.schedule(
+     `disconnect:${roomId}:${username}`,
+     DISCONNECT_GRACE_MS,
+     async () => {
+      const room = await roomService.getRoom(roomId);
+      if (room && room.gameState.status === GAME_STATUS.IN_PROGRESS) {
+       // Only forfeit if the player is still gone (no reconnect)
+       const player = room.players.get(username);
+       if (!player?.isVisible) {
+        await gameService.handleForfeit(roomId, username, 'DISCONNECT');
+       }
+      }
+     }
+    );
    }
   }
  });

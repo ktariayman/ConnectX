@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { gameHistoryRepository } from '../../registry';
+import { getErrorMessage } from '../../application/utils/errors';
 
 export class GameHistoryController {
  /**
@@ -16,8 +17,8 @@ export class GameHistoryController {
    }
 
    return res.json(game);
-  } catch (error: any) {
-   return res.status(500).json({ error: 'Internal server error' });
+  } catch (error: unknown) {
+   return res.status(500).json({ error: getErrorMessage(error) });
   }
  }
 
@@ -31,8 +32,8 @@ export class GameHistoryController {
    const games = await gameHistoryRepository.findByPlayer(username);
 
    return res.json(games);
-  } catch (error: any) {
-   return res.status(500).json({ error: 'Internal server error' });
+  } catch (error: unknown) {
+   return res.status(500).json({ error: getErrorMessage(error) });
   }
  }
 
@@ -44,8 +45,8 @@ export class GameHistoryController {
   try {
    const games = await gameHistoryRepository.findAll();
    return res.json(games);
-  } catch (error: any) {
-   return res.status(500).json({ error: 'Internal server error' });
+  } catch (error: unknown) {
+   return res.status(500).json({ error: getErrorMessage(error) });
   }
  }
 }

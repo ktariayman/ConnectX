@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { Server as HttpServer } from 'http';
 import { setupRoomHandlers, setupRoomDomainListeners } from './handlers/roomHandlers';
 import { setupGameHandlers, setupGameDomainListeners } from './handlers/gameHandlers';
+import config from '../../config';
 
 export class WebSocketServer {
  private static instance: WebSocketServer;
@@ -10,7 +11,7 @@ export class WebSocketServer {
  private constructor(httpServer: HttpServer) {
   this.io = new Server(httpServer, {
    cors: {
-    origin: '*',
+    origin: config.allowedOrigins,
     methods: ['GET', 'POST'],
    },
   });

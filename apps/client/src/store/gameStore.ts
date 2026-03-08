@@ -64,34 +64,9 @@ export const useGameStore = create<GameStore>()(
   {
    name: 'connectx-game-storage',
    partialize: (state) => ({
-    room: state.room,
     playerId: state.playerId,
     username: state.username,
-    gameState: state.gameState,
-    context: state.context,
    }),
-   storage: {
-    getItem: (name) => {
-     const str = localStorage.getItem(name);
-     if (!str) return null;
-     return JSON.parse(str, (key, value) => {
-      if (value && typeof value === 'object' && value.__type === 'Map') {
-       return new Map(value.value);
-      }
-      return value;
-     });
-    },
-    setItem: (name, value) => {
-     const str = JSON.stringify(value, (key, val) => {
-      if (val instanceof Map) {
-       return { __type: 'Map', value: Array.from(val.entries()) };
-      }
-      return val;
-     });
-     localStorage.setItem(name, str);
-    },
-    removeItem: (name) => localStorage.removeItem(name),
-   },
   }
  )
 );

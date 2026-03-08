@@ -51,6 +51,7 @@ export class RoomService implements IRoomService {
     moveHistory: [],
    },
    createdAt: new Date(),
+   gameStartedAt: null,
    turnStartedAt: null,
   };
 
@@ -84,7 +85,7 @@ export class RoomService implements IRoomService {
   const newPlayerId = user.username;
   const player: Player = {
    id: newPlayerId,
-   color: 'BLUE',
+   color: 'YELLOW',
    isReady: false,
   };
 

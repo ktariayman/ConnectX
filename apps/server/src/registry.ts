@@ -53,6 +53,7 @@ const gameHistoryRepository = container.get<IGameHistoryRepository>(TYPES.GameHi
 const userService = container.get<UserService>(TYPES.UserService);
 const roomService = container.get<RoomService>(TYPES.RoomService);
 const gameService = container.get<GameService>(TYPES.GameService);
+const schedulerService = container.get<SchedulerService>(TYPES.SchedulerService);
 
 export {
   container,
@@ -61,6 +62,7 @@ export {
   userService,
   roomService,
   gameService,
+  schedulerService,
   initializeConnections,
   cleanup,
 };

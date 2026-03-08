@@ -48,6 +48,7 @@ export interface Room {
  spectators: Set<string>;
  gameState: GameState;
  createdAt: Date;
+ gameStartedAt: Date | null;
  turnStartedAt: Date | null;
 }
 

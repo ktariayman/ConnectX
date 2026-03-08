@@ -63,12 +63,20 @@ export function GamePage() {
     socketEmit.makeMove(roomId!, columnIndex);
   };
 
+  const handleLeaveWithConfirm = () => {
+    if (!isSpectator && gameState?.status === GAME_STATUS.IN_PROGRESS) {
+      const confirmed = window.confirm('Leave this game? You will forfeit the match.');
+      if (!confirmed) return;
+    }
+    handleLeave();
+  };
+
   const handleRematch = () => {
     socketEmit.playerReady();
     setShowResultModal(false);
   };
 
-  if (isLoading || !room || !gameState) {
+  if (isLoading) {
     return (
       <div className={styles.loading}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -77,7 +85,17 @@ export function GamePage() {
     );
   }
 
-  // Waiting Room View
+  if (!room || !gameState) {
+    return (
+      <div className={styles.loading}>
+        <p className="text-4xl mb-2">🚫</p>
+        <h2 className="text-xl font-bold mb-1">Room Not Found</h2>
+        <p className="text-muted-foreground text-sm mb-6">This room may have expired or never existed.</p>
+        <Button variant="default" onClick={() => window.location.href = '/'}>Back to Home</Button>
+      </div>
+    );
+  }
+
   if (gameState.status === GAME_STATUS.WAITING) {
     return (
       <WaitingRoom 
@@ -88,9 +106,9 @@ export function GamePage() {
     );
   }
 
-  const currentPlayer = room.players.get(gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? 
-    Array.from(room.players.keys())[0] : 
-    Array.from(room.players.keys())[1]
+  // Derive currentPlayer by color: RED = PLAYER_1, YELLOW = PLAYER_2
+  const currentPlayer = Array.from(room.players.values()).find(
+    (p) => p.color === (gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? PLAYER_COLOR.RED : PLAYER_COLOR.YELLOW)
   );
 
   const getDifficultyColor = (level: string) => {
@@ -107,7 +125,7 @@ export function GamePage() {
         {/* Top Actions Bar */}
         <div className={styles.topActions}>
           <div className={styles.header}>
-            <Button variant="outline" size="sm" onClick={handleLeave}>
+            <Button variant="outline" size="sm" onClick={handleLeaveWithConfirm}>
               ← Leave Game
             </Button>
             <div>
@@ -136,7 +154,7 @@ export function GamePage() {
                   <div className={`w-3 h-3 rounded-full ${player.color === PLAYER_COLOR.RED ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]'}`} />
                   <div className="flex flex-col">
                     <span className="font-medium text-sm">
-                      {player.id === playerId ? 'You' : `Player ${player.id.slice(0, 4)}`}
+                      {player.id === playerId ? 'You' : player.id}
                     </span>
                     {player.id === playerId && (
                       <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
@@ -156,7 +174,7 @@ export function GamePage() {
             {gameState.status === GAME_STATUS.IN_PROGRESS ? (
               <div className="flex flex-col gap-1">
                 <span className={currentPlayer?.color === PLAYER_COLOR.RED ? 'text-rose-500 font-bold text-lg' : 'text-amber-500 font-bold text-lg'}>
-                  {currentPlayer?.id === playerId ? "Your Turn" : `${currentPlayer?.id.slice(0, 4)}'s Turn`}
+                  {currentPlayer?.id === playerId ? "Your Turn" : `${currentPlayer?.id}'s Turn`}
                 </span>
                  {typeof timeLeft === 'number' && (
                   <span className={`text-sm font-mono ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-muted-foreground'}`}>
@@ -177,23 +195,53 @@ export function GamePage() {
           />
         </div>
 
-        {/* Game Info / Chat Placeholder */}
-        <div className="bg-card rounded-lg border border-border p-4 h-full min-h-[400px]">
-           <h3 className="font-bold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Game Log</h3>
-           <div className="space-y-2 text-sm font-mono max-h-[400px] overflow-y-auto">
-             {gameState.moveHistory.map((move, i) => (
-               <div key={i} className="flex items-center gap-2 text-muted-foreground">
-                 <span className="opacity-50">#{i + 1}</span>
-                 <span className={move.player === PLAYER_TYPE.PLAYER_1 ? 'text-rose-500' : 'text-amber-500'}>
-                   {move.player === PLAYER_TYPE.PLAYER_1 ? 'Red' : 'Yellow'}
-                 </span>
-                 <span>dropped in col {move.column + 1}</span>
-               </div>
-             ))}
-             {gameState.moveHistory.length === 0 && (
-               <p className="text-center text-muted-foreground opacity-50 italic py-8">Game started</p>
-             )}
-           </div>
+        {/* Game Info Sidebar */}
+        <div className="bg-card rounded-lg border border-border p-4 h-full min-h-[400px] flex flex-col gap-4">
+          {/* B7: Spectator count */}
+          {room.spectators.size > 0 && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground border-b border-border pb-3">
+              <span>👁️</span>
+              <span>{room.spectators.size} {room.spectators.size === 1 ? 'person' : 'people'} watching</span>
+            </div>
+          )}
+
+          {/* Opponent info */}
+          {!isSpectator && (() => {
+            const opponent = Array.from(room.players.values()).find(p => p.id !== playerId);
+            return opponent ? (
+              <div className="text-xs text-muted-foreground border-b border-border pb-3">
+                <span>vs </span>
+                <span className={`font-semibold ${opponent.color === 'RED' ? 'text-rose-500' : 'text-amber-500'}`}>
+                  {opponent.id}
+                </span>
+              </div>
+            ) : null;
+          })()}
+
+          {/* Move log */}
+          <div className="flex-1">
+            <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-muted-foreground">Game Log</h3>
+            <div className="space-y-2 text-sm font-mono max-h-[340px] overflow-y-auto">
+              {gameState.moveHistory.map((move, i) => {
+                // Map player type → actual username using color
+                const playerColor = move.player === PLAYER_TYPE.PLAYER_1 ? 'RED' : 'YELLOW';
+                const actor = Array.from(room.players.values()).find(p => p.color === playerColor);
+                const displayName = actor ? (actor.id === playerId ? 'You' : actor.id) : (move.player === PLAYER_TYPE.PLAYER_1 ? 'Red' : 'Yellow');
+                return (
+                  <div key={i} className="flex items-center gap-2 text-muted-foreground">
+                    <span className="opacity-40 text-xs w-6 text-right">#{i + 1}</span>
+                    <span className={move.player === PLAYER_TYPE.PLAYER_1 ? 'text-rose-500 font-medium' : 'text-amber-500 font-medium'}>
+                      {displayName}
+                    </span>
+                    <span className="text-xs">→ col {move.column + 1}</span>
+                  </div>
+                );
+              })}
+              {gameState.moveHistory.length === 0 && (
+                <p className="text-center text-muted-foreground opacity-50 italic py-8">No moves yet</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -207,15 +255,12 @@ export function GamePage() {
         <h2 className={styles.result}>
           {(() => {
             if (gameState.winner === GAME_RESULT.DRAW) return 'Draw!';
-            
-            const playerIds = Array.from(room.players.keys());
-            const winnerId = gameState.winner === GAME_RESULT.PLAYER_1 
-              ? playerIds[0] 
-              : gameState.winner === GAME_RESULT.PLAYER_2 
-                ? playerIds[1] 
-                : null;
-            
-            return winnerId === playerId ? 'You Won!' : 'You Lost!';
+
+            // Resolve winner by color to avoid Map index fragility
+            const winnerColor = gameState.winner === GAME_RESULT.PLAYER_1 ? PLAYER_COLOR.RED : PLAYER_COLOR.YELLOW;
+            const winnerPlayer = Array.from(room.players.values()).find((p) => p.color === winnerColor);
+
+            return winnerPlayer?.id === playerId ? 'You Won! 🎉' : `${winnerPlayer?.id ?? 'Opponent'} Wins!`;
           })()}
         </h2>
         

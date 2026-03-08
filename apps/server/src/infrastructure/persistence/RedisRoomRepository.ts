@@ -21,6 +21,7 @@ export class RedisRoomRepository implements IRoomRepository {
    players: Array.from(room.players.entries()),
    spectators: Array.from(room.spectators),
    createdAt: room.createdAt.toISOString(),
+   gameStartedAt: room.gameStartedAt?.toISOString() || null,
    turnStartedAt: room.turnStartedAt?.toISOString() || null,
    gameState: {
     ...room.gameState,
@@ -134,6 +135,7 @@ export class RedisRoomRepository implements IRoomRepository {
    players: new Map(data.players),
    spectators: new Set(data.spectators),
    createdAt: new Date(data.createdAt),
+   gameStartedAt: data.gameStartedAt ? new Date(data.gameStartedAt) : null,
    turnStartedAt: data.turnStartedAt ? new Date(data.turnStartedAt) : null,
    gameState: {
     ...data.gameState,
