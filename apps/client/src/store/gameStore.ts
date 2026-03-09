@@ -30,6 +30,7 @@ interface GameStore {
  setContext: (context: GameContext) => void;
  setConnected: (connected: boolean) => void;
  setError: (error: string | null) => void;
+ clearSession: () => void;
  reset: () => void;
 }
 
@@ -51,6 +52,7 @@ export const useGameStore = create<GameStore>()(
    setContext: (context) => set({ context }),
    setConnected: (isConnected) => set({ isConnected }),
    setError: (error) => set({ error }),
+   clearSession: () => set({ room: null, gameState: null, context: null, error: null }),
    reset: () => set({
     room: null,
     playerId: null,

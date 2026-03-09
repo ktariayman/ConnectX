@@ -60,10 +60,11 @@ export class GameService implements IGameService {
   const room = await this.roomRepository.findById(roomId);
   if (!room || room.gameState.status !== GAME_STATUS.IN_PROGRESS) return;
   this.clearTurnTimeout(roomId);
-  const playerIds = Array.from(room.players.keys());
-  const currentPlayerIndex = room.gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? 0 : 1;
+  // Resolve whose turn it is by color — never rely on Map insertion order
+  const expectedColor = room.gameState.currentPlayer === PLAYER_TYPE.PLAYER_1 ? 'RED' : 'YELLOW';
+  const currentPlayerEntry = Array.from(room.players.values()).find(p => p.color === expectedColor);
 
-  if (playerIds[currentPlayerIndex] !== username) {
+  if (!currentPlayerEntry || currentPlayerEntry.id !== username) {
    this.scheduleTurnTimeout(roomId, room.difficulty, room.turnStartedAt);
    throw new Error('Not your turn');
   }
@@ -108,11 +109,12 @@ export class GameService implements IGameService {
   const room = await this.roomRepository.findById(roomId);
   if (!room || room.gameState.status !== GAME_STATUS.IN_PROGRESS) return;
 
-  const playerIds = Array.from(room.players.keys());
-  const remainingPlayerId = playerIds.find(id => id !== username);
+  const players = Array.from(room.players.values());
+  const remainingPlayer = players.find(p => p.id !== username);
 
-  if (remainingPlayerId) {
-   const winner = playerIds.indexOf(remainingPlayerId) === 0 ? PLAYER_TYPE.PLAYER_1 : PLAYER_TYPE.PLAYER_2;
+  if (remainingPlayer) {
+   // Determine PLAYER_1 / PLAYER_2 by color — never by Map index
+   const winner = remainingPlayer.color === 'RED' ? PLAYER_TYPE.PLAYER_1 : PLAYER_TYPE.PLAYER_2;
    this.finishGame(room, winner, null, reason);
    await this.roomRepository.save(room);
   }

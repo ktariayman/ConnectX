@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { roomApi } from '../lib/api';
@@ -24,7 +24,7 @@ export function useGameRoom(roomId: string | undefined, isSpectatorMode: boolean
  const [showResultModal, setShowResultModal] = useState(false);
  const isSpectator = context?.isSpectator ?? false;
 
- // Fetch room data if needed
+ // Fetch room data — only when we don't have a matching room in memory
  const needsFetch = !!roomId && (!room || room.id !== roomId);
  const pollInterval = gameState?.status === GAME_STATUS.WAITING ? 3000 : undefined;
 
@@ -32,12 +32,12 @@ export function useGameRoom(roomId: string | undefined, isSpectatorMode: boolean
   queryKey: ['room', roomId],
   queryFn: () => roomApi.get(roomId!),
   enabled: needsFetch || !!pollInterval,
-  refetchOnWindowFocus: true,
+  refetchOnWindowFocus: false,  // avoid spurious re-fetches
   refetchOnMount: true,
   refetchInterval: pollInterval,
  });
 
- // Update room when data is fetched
+ // Apply HTTP-fetched room to store
  useEffect(() => {
   if (roomData) {
    const convertedRoom = transformRoomData(roomData);
@@ -101,16 +101,44 @@ export function useGameRoom(roomId: string | undefined, isSpectatorMode: boolean
   };
  }, [roomId, playerId, setRoom, setGameState, setContext]);
 
- // Join room
+ // Join / rejoin room — emit as soon as socket is ready.
+ // Use a ref to track the previous roomId so we reset context when switching rooms,
+ // without triggering a full re-render cascade.
+ const prevRoomId = useRef<string | undefined>(undefined);
+
  useEffect(() => {
-  if (socket.connected && roomId && playerId) {
-   if (isSpectatorMode || isSpectator) {
+  if (!roomId || !playerId) return;
+
+  // When switching to a different room, clear stale context so the board
+  // doesn't stay disabled with old isMyTurn=false.
+  if (prevRoomId.current && prevRoomId.current !== roomId) {
+   setContext(null as any);
+  }
+  prevRoomId.current = roomId;
+
+  const emitJoin = () => {
+   if (!roomId || !playerId) return;
+   if (isSpectatorMode) {
     socketEmit.spectateRoom(roomId, playerId);
-   } else if (room?.players?.has(playerId)) {
+   } else {
     socketEmit.joinRoom(roomId, playerId);
    }
+  };
+
+  // Emit immediately if connected; otherwise connect first
+  if (socket.connected) {
+   emitJoin();
+  } else {
+   socket.connect();
   }
- }, [socket.connected, roomId, playerId, isSpectatorMode, isSpectator, !!room]);
+
+  // Handle reconnects (brief network drops dispatch 'connect' again)
+  socket.on('connect', emitJoin);
+
+  return () => {
+   socket.off('connect', emitJoin);
+  };
+ }, [roomId, playerId, isSpectatorMode]);
 
  // Handle leave
  const handleLeave = useCallback(() => {
@@ -131,7 +159,7 @@ export function useGameRoom(roomId: string | undefined, isSpectatorMode: boolean
   };
  }, [roomId, playerId, isSpectator]);
 
- // Handle browser close
+ // Warn before closing tab during an active game
  useEffect(() => {
   const handleBeforeUnload = (e: BeforeUnloadEvent) => {
    if (gameState?.status === GAME_STATUS.IN_PROGRESS) {

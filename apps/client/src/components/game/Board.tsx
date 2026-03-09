@@ -1,13 +1,6 @@
 import { CellState } from '@connect-x/shared';
 import { Cell } from './Cell';
 
-const styles = {
-  board: 'inline-block bg-black/20 p-6 rounded-3xl shadow-2xl backdrop-blur-xl border border-white/10 ring-1 ring-white/5',
-  grid: 'flex gap-3',
-  column: 'flex flex-col gap-3 cursor-pointer hover:bg-white/5 rounded-full transition-colors duration-200 p-2',
-  disabled: 'cursor-not-allowed opacity-80',
-};
-
 interface BoardProps {
   board: CellState[][];
   onColumnClick: (column: number) => void;
@@ -24,13 +17,25 @@ export function Board({ board, onColumnClick, winningCells, disabled }: BoardPro
   const cols = board[0]?.length || 0;
 
   return (
-    <div className={styles.board}>
-      {/* Container for the grid */}
-      <div className={styles.grid}>
+    // Solid blue board frame — always visible in both light and dark mode
+    <div
+      className="inline-block rounded-2xl shadow-2xl p-3"
+      style={{
+        background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 50%, #1e3a8a 100%)',
+        boxShadow: '0 20px 60px rgba(30, 64, 175, 0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+      }}
+    >
+      {/* Column buttons — clicking anywhere in a column drops the piece */}
+      <div className="flex gap-2">
         {Array.from({ length: cols }).map((_, colIndex) => (
-          <div
+          <button
             key={colIndex}
-            className={`${styles.column} ${disabled ? styles.disabled : ''}`}
+            type="button"
+            disabled={disabled}
+            className={[
+              'flex flex-col gap-2 rounded-xl p-1.5 transition-all duration-150',
+              !disabled ? 'hover:bg-white/10 cursor-pointer' : 'cursor-not-allowed',
+            ].join(' ')}
             onClick={() => {
               if (!disabled) onColumnClick(colIndex);
             }}
@@ -43,7 +48,7 @@ export function Board({ board, onColumnClick, winningCells, disabled }: BoardPro
                 disabled={disabled}
               />
             ))}
-          </div>
+          </button>
         ))}
       </div>
     </div>
