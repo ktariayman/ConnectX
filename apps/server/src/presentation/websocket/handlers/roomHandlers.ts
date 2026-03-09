@@ -3,17 +3,14 @@ import { GAME_STATUS, RoomJoinSchema } from '@connect-x/shared';
 import { roomService, gameService, userService, schedulerService } from '../../../registry';
 import { gameEvents, GameEvent } from '../../../domain/events/GameEventEmitter';
 import { calculateGameContext } from '../../../application/utils/context';
+import { getErrorMessage } from '../../../application/utils/errors';
 
 /** C1: Grace period (ms) before a disconnected player is forfeited */
 const DISCONNECT_GRACE_MS = 30_000;
 
 export function setupRoomHandlers(io: Server, socket: Socket) {
- // C4: Track whether this socket has already joined a room to prevent duplicate emits
- let hasJoined = false;
 
  socket.on('room:join', async (data) => {
-  // C4: Skip duplicate join attempts for the same socket
-  if (hasJoined) return;
   try {
    const { roomId, username } = RoomJoinSchema.parse(data);
    await userService.register(username);
@@ -24,32 +21,32 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     return;
    }
 
-   hasJoined = true;
-
    // C1: Cancel any pending disconnect forfeit for this player
    schedulerService.cancelLastScheduled(`disconnect:${roomId}:${username}`);
 
    await gameService.updatePlayerVisibility(roomId, username, true);
 
+   // Always (re)join the Socket.IO room — idempotent, handles first join + reconnects
    socket.join(roomId);
    socket.data.roomId = roomId;
    socket.data.username = result.username;
    socket.data.isSpectator = false;
 
-   // Send initial state — includes turnStartedAt so client can sync timer on reconnect (C3)
+   // Send fresh state + context directly to this socket (C3: includes turnStartedAt for timer sync)
    socket.emit('room:updated', {
     playerId: result.username,
     room: {
      ...result.room,
      players: Array.from(result.room.players.values()),
+     spectators: Array.from(result.room.spectators),
      turnStartedAt: result.room.turnStartedAt?.toISOString() ?? null,
     },
     turnStartedAt: result.room.turnStartedAt?.toISOString() ?? null,
     context: calculateGameContext(result.room, result.username)
    });
 
-  } catch (error: any) {
-   socket.emit('error', { code: 'INVALID_DATA', message: error.message });
+  } catch (error: unknown) {
+   socket.emit('error', { code: 'INVALID_DATA', message: getErrorMessage(error) });
   }
  });
 
@@ -69,7 +66,6 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    socket.data.username = result.username;
    socket.data.isSpectator = true;
 
-   // Send initial state to the spectator
    socket.emit('room:updated', {
     playerId: result.username,
     room: {
@@ -80,8 +76,8 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     context: calculateGameContext(result.room, result.username)
    });
 
-  } catch (error: any) {
-   socket.emit('error', { code: 'INVALID_DATA', message: error.message });
+  } catch (error: unknown) {
+   socket.emit('error', { code: 'INVALID_DATA', message: getErrorMessage(error) });
   }
  });
 
@@ -98,11 +94,9 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    if (isSpectator) {
     await roomService.leaveAsSpectator(socket.id, username);
    } else {
-    // Intentional leave during a game = mark as invisible, game turn timer handles forfeit
     await gameService.updatePlayerVisibility(roomId, username, false);
    }
    socket.leave(roomId);
-   hasJoined = false;
   }
  });
 
@@ -122,7 +116,6 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
     await gameService.handleForfeit(roomId, username, 'OPPONENT_LEFT');
    }
    socket.leave(roomId);
-   hasJoined = false;
   }
  });
 
@@ -132,7 +125,6 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
    if (isSpectator) {
     await roomService.leaveAsSpectator(socket.id, username);
    } else {
-    // Mark as disconnected / not visible immediately
     await gameService.updatePlayerVisibility(roomId, username, false);
 
     // C1: Schedule a grace-period forfeit — player can reconnect within 30s to cancel it
@@ -142,7 +134,6 @@ export function setupRoomHandlers(io: Server, socket: Socket) {
      async () => {
       const room = await roomService.getRoom(roomId);
       if (room && room.gameState.status === GAME_STATUS.IN_PROGRESS) {
-       // Only forfeit if the player is still gone (no reconnect)
        const player = room.players.get(username);
        if (!player?.isVisible) {
         await gameService.handleForfeit(roomId, username, 'DISCONNECT');
@@ -162,15 +153,15 @@ export function setupRoomDomainListeners(io: Server) {
   const sockets = io.sockets.adapter.rooms.get(roomId);
   if (sockets) {
    for (const socketId of sockets) {
-    const socket = io.sockets.sockets.get(socketId);
-    if (socket && socket.data.username) {
-     socket.emit('room:updated', {
+    const s = io.sockets.sockets.get(socketId);
+    if (s && s.data.username) {
+     s.emit('room:updated', {
       room: {
        ...room,
        players: Array.from(room.players.values()),
        spectators: Array.from(room.spectators)
       },
-      context: calculateGameContext(room, socket.data.username)
+      context: calculateGameContext(room, s.data.username)
      });
     }
    }

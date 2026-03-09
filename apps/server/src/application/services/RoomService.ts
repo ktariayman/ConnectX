@@ -75,7 +75,12 @@ export class RoomService implements IRoomService {
    if (room.gameState.status === GAME_STATUS.FINISHED) {
     return { room, username: '', error: 'This game has finished. Use the replay feature to watch it.' };
    }
+   // Reconnect: update socket tracking, mark visible, broadcast updated room to everyone
    await this.roomRepository.trackPlayer(socketId, roomId);
+   const player = room.players.get(user.username);
+   if (player) player.isVisible = true;
+   await this.roomRepository.save(room);
+   gameEvents.emitEvent(GameEvent.ROOM_UPDATED, { roomId, room });
    return { room, username: user.username };
   }
 
